@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-v1
+  namespace: main
+  labels:
+    app: users
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+        - name: users-container
+          image: mgrigoriev/users:v1
+          ports:
+            - containerPort: 8080
