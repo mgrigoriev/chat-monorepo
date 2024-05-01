@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: messages
+  namespace: main
+spec:
+  type: LoadBalancer
+  selector:
+    app: messages
+  ports:
+    - name: http
+      protocol: TCP
+      targetPort: 8080
+      port: 81
