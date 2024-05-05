@@ -1,0 +1,493 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Chatservers Service API"
+  },
+  "host": "localhost",
+  "basePath": "/api/",
+  "tags": [
+    {
+      "name": "chatserver"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/v1/chatservers": {
+      "post": {
+        "tags": [
+          "chatserver"
+        ],
+        "summary": "Создание нового сервера",
+        "operationId": "createChatServer",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Запрос на создание сервера",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateChatServerRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "ChatServer successfully created",
+            "schema": {
+              "$ref": "#/definitions/CreateChatServerResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "409": {
+            "description": "ChatServer already exists",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/chatservers/{id}": {
+      "get": {
+        "tags": [
+          "chatserver"
+        ],
+        "summary": "Получение сервера",
+        "operationId": "getChatServer",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id сервера",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/GetChatServerResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/chatservers/search": {
+      "get": {
+        "tags": [
+          "chatserver"
+        ],
+        "summary": "Поиск сервера",
+        "operationId": "searchChatServers",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Результаты поиска",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GetChatServerResponse"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/chatservers/{id}/participants": {
+      "post": {
+        "tags": [
+          "chatserver"
+        ],
+        "summary": "Присоединение пользователя к серверу",
+        "operationId": "createParticipant",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id сервера",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Запрос на присоединение к серверу",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateParticipantRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Participant successfully created",
+            "schema": {
+              "$ref": "#/definitions/CreateParticipantResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/chatservers/{id}/participants/{participant_id}": {
+      "delete": {
+        "tags": [
+          "chatserver"
+        ],
+        "summary": "Отписаться от сервера",
+        "operationId": "deleteParticipant",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id сервера",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "path",
+            "name": "participant_id",
+            "description": "id подписчика",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Participant deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/chatservers/of_user/{user_id}": {
+      "get": {
+        "tags": [
+          "chatserver"
+        ],
+        "summary": "Получить список серверов пользователя (сервера на которые подписан и свои созданные сервера)",
+        "operationId": "getUserChatServers",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "description": "id пользователя",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Результаты поиска",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GetChatServerResponse"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/chatservers/{id}/invites": {
+      "post": {
+        "tags": [
+          "chatserver"
+        ],
+        "summary": "Пригласить пользователя на сервер",
+        "operationId": "creatInvite",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id сервера",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Запрос на приглашение пользователя на сервер",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateInviteRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Invite successfully created",
+            "schema": {
+              "$ref": "#/definitions/CreateInviteResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ErrorMessage": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "CreateChatServerRequest": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "chatserver123"
+        }
+      }
+    },
+    "CreateChatServerResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        }
+      }
+    },
+    "GetChatServerResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "chatserver123"
+        }
+      }
+    },
+    "CreateParticipantRequest": {
+      "type": "object",
+      "required": [
+        "user_id"
+      ],
+      "properties": {
+        "user_id": {
+          "type": "integer",
+          "example": "123"
+        }
+      }
+    },
+    "CreateParticipantResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        }
+      }
+    },
+    "CreateInviteRequest": {
+      "type": "object",
+      "required": [
+        "user_id"
+      ],
+      "properties": {
+        "user_id": {
+          "type": "integer",
+          "example": "123"
+        }
+      }
+    },
+    "CreateInviteResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
