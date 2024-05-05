@@ -2,14 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/go-openapi/strfmt"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/mgrigoriev/chat-monorepo/users/server/models"
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/go-openapi/strfmt"
-	"github.com/labstack/echo/v4"
 )
 
 var empty struct{}
@@ -102,7 +102,7 @@ func login(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func authenticate(c echo.Context) error {
+func auth(c echo.Context) error {
 	var request models.AuthUserRequest
 
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
@@ -113,7 +113,10 @@ func authenticate(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, httpErrorMsg(err))
 	}
 
-	// ...
+	// TODO: Implement auth logic
+	if *request.Token != "valid-token" {
+		return c.JSON(http.StatusUnauthorized, httpErrorMsg(errors.New("invalid token")))
+	}
 
 	response := models.GetUserResponse{
 		ID:    int64(1),
@@ -241,7 +244,7 @@ func main() {
 	e.PUT("/api/v1/users/:id", updateUser)
 
 	e.POST("/api/v1/users/login", login)
-	e.POST("/api/v1/users/auth", authenticate)
+	e.POST("/api/v1/users/auth", auth)
 
 	e.GET("/api/v1/users/search", searchUsers)
 

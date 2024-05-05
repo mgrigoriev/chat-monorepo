@@ -2,22 +2,25 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-openapi/strfmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/mgrigoriev/chat-monorepo/chatservers/server/models"
+	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/authclient"
+	models2 "github.com/mgrigoriev/chat-monorepo/chatservers/internal/server/models"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var empty struct{}
 
-func httpErrorMsg(err error) *models.ErrorMessage {
+func httpErrorMsg(err error) *models2.ErrorMessage {
 	if err == nil {
 		return nil
 	}
-	return &models.ErrorMessage{
+	return &models2.ErrorMessage{
 		Message: err.Error(),
 	}
 }
@@ -28,8 +31,22 @@ func health(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+func authenticate(c echo.Context) (userID int, err error) {
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		return 0, fmt.Errorf("auth header not found")
+	}
+
+	authToken := strings.Split(authHeader, "Bearer ")
+	if len(authToken) < 2 {
+		return 0, fmt.Errorf("invalid token")
+	}
+
+	return authclient.Authenticate(authToken[1])
+}
+
 func createChatServer(c echo.Context) error {
-	var request models.CreateChatServerRequest
+	var request models2.CreateChatServerRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, httpErrorMsg(err))
 	}
@@ -40,11 +57,16 @@ func createChatServer(c echo.Context) error {
 
 	// ...
 
-	response := models.CreateChatServerResponse{ID: 1}
+	response := models2.CreateChatServerResponse{ID: 1}
 	return c.JSON(http.StatusCreated, response)
 }
 
 func getChatServer(c echo.Context) error {
+	_, err := authenticate(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, httpErrorMsg(err))
+	}
+
 	id := c.Param("id")
 	chatServerID, err := strconv.Atoi(id)
 	if err != nil {
@@ -53,7 +75,7 @@ func getChatServer(c echo.Context) error {
 
 	// ...
 
-	response := models.GetChatServerResponse{
+	response := models2.GetChatServerResponse{
 		ID:   int64(chatServerID),
 		Name: "test",
 	}
@@ -66,7 +88,7 @@ func searchChatServers(c echo.Context) error {
 
 	// ...
 
-	response := []models.GetChatServerResponse{
+	response := []models2.GetChatServerResponse{
 		{
 			ID:   1,
 			Name: "test",
@@ -85,7 +107,7 @@ func getUserChatServers(c echo.Context) error {
 
 	// ...
 
-	response := []models.GetChatServerResponse{
+	response := []models2.GetChatServerResponse{
 		{
 			ID:   1,
 			Name: "test",
@@ -95,7 +117,7 @@ func getUserChatServers(c echo.Context) error {
 }
 
 func createParticipant(c echo.Context) error {
-	var request models.CreateParticipantRequest
+	var request models2.CreateParticipantRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, httpErrorMsg(err))
 	}
@@ -106,7 +128,7 @@ func createParticipant(c echo.Context) error {
 
 	// ...
 
-	response := models.CreateParticipantResponse{ID: 1}
+	response := models2.CreateParticipantResponse{ID: 1}
 	return c.JSON(http.StatusCreated, response)
 }
 
@@ -123,7 +145,7 @@ func deleteParticipant(c echo.Context) error {
 }
 
 func createInvite(c echo.Context) error {
-	var request models.CreateInviteRequest
+	var request models2.CreateInviteRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, httpErrorMsg(err))
 	}
@@ -134,7 +156,7 @@ func createInvite(c echo.Context) error {
 
 	// ...
 
-	response := models.CreateInviteResponse{ID: 1}
+	response := models2.CreateInviteResponse{ID: 1}
 	return c.JSON(http.StatusCreated, response)
 }
 
