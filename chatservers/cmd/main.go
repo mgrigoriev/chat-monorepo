@@ -6,6 +6,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/authclient"
 	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/server/models"
 	"net/http"
@@ -62,10 +63,13 @@ func createChatServer(c echo.Context) error {
 }
 
 func getChatServer(c echo.Context) error {
-	_, err := authenticate(c)
+	userID, err := authenticate(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, httpErrorMsg(err))
 	}
+
+	// DEBUG
+	c.Logger().Debug("Authenticated User ID: ", userID)
 
 	id := c.Param("id")
 	chatServerID, err := strconv.Atoi(id)
@@ -165,6 +169,8 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	e.Logger.SetLevel(log.DEBUG)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, "ChatServers Service")

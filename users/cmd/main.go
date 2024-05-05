@@ -119,7 +119,7 @@ func auth(c echo.Context) error {
 	}
 
 	response := models.GetUserResponse{
-		ID:    int64(1),
+		ID:    8,
 		Email: "test@mail.ru",
 		Name:  "test",
 	}
