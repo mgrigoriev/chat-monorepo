@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/authclient"
-	models2 "github.com/mgrigoriev/chat-monorepo/chatservers/internal/server/models"
+	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/server/models"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,11 +16,11 @@ import (
 
 var empty struct{}
 
-func httpErrorMsg(err error) *models2.ErrorMessage {
+func httpErrorMsg(err error) *models.ErrorMessage {
 	if err == nil {
 		return nil
 	}
-	return &models2.ErrorMessage{
+	return &models.ErrorMessage{
 		Message: err.Error(),
 	}
 }
@@ -46,7 +46,7 @@ func authenticate(c echo.Context) (userID int, err error) {
 }
 
 func createChatServer(c echo.Context) error {
-	var request models2.CreateChatServerRequest
+	var request models.CreateChatServerRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, httpErrorMsg(err))
 	}
@@ -57,7 +57,7 @@ func createChatServer(c echo.Context) error {
 
 	// ...
 
-	response := models2.CreateChatServerResponse{ID: 1}
+	response := models.CreateChatServerResponse{ID: 1}
 	return c.JSON(http.StatusCreated, response)
 }
 
@@ -75,7 +75,7 @@ func getChatServer(c echo.Context) error {
 
 	// ...
 
-	response := models2.GetChatServerResponse{
+	response := models.GetChatServerResponse{
 		ID:   int64(chatServerID),
 		Name: "test",
 	}
@@ -88,7 +88,7 @@ func searchChatServers(c echo.Context) error {
 
 	// ...
 
-	response := []models2.GetChatServerResponse{
+	response := []models.GetChatServerResponse{
 		{
 			ID:   1,
 			Name: "test",
@@ -107,7 +107,7 @@ func getUserChatServers(c echo.Context) error {
 
 	// ...
 
-	response := []models2.GetChatServerResponse{
+	response := []models.GetChatServerResponse{
 		{
 			ID:   1,
 			Name: "test",
@@ -117,7 +117,7 @@ func getUserChatServers(c echo.Context) error {
 }
 
 func createParticipant(c echo.Context) error {
-	var request models2.CreateParticipantRequest
+	var request models.CreateParticipantRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, httpErrorMsg(err))
 	}
@@ -128,7 +128,7 @@ func createParticipant(c echo.Context) error {
 
 	// ...
 
-	response := models2.CreateParticipantResponse{ID: 1}
+	response := models.CreateParticipantResponse{ID: 1}
 	return c.JSON(http.StatusCreated, response)
 }
 
@@ -145,7 +145,7 @@ func deleteParticipant(c echo.Context) error {
 }
 
 func createInvite(c echo.Context) error {
-	var request models2.CreateInviteRequest
+	var request models.CreateInviteRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, httpErrorMsg(err))
 	}
@@ -156,7 +156,7 @@ func createInvite(c echo.Context) error {
 
 	// ...
 
-	response := models2.CreateInviteResponse{ID: 1}
+	response := models.CreateInviteResponse{ID: 1}
 	return c.JSON(http.StatusCreated, response)
 }
 
