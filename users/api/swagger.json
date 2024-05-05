@@ -1,0 +1,754 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Swagger Example"
+  },
+  "host": "localhost",
+  "basePath": "/api/",
+  "tags": [
+    {
+      "name": "user"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/v1/users": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Создание нового пользователя",
+        "operationId": "createUser",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Запрос на создание пользователя",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User successfully created",
+            "schema": {
+              "$ref": "#/definitions/CreateUserResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "409": {
+            "description": "User already exists",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{id}": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Получение пользователя",
+        "operationId": "getUser",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id пользователя",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/GetUserResponse"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Обновление пользователя",
+        "operationId": "updateUser",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id пользователя",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Запрос на обновление пользователя",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User successfully updated",
+            "schema": {
+              "$ref": "#/definitions/UpdateUserResponse"
+            }
+          },
+          "204": {
+            "description": "No content",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/login": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Логин",
+        "operationId": "login",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "запрос на вход",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User logged in successfully",
+            "schema": {
+              "$ref": "#/definitions/LoginUserResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/auth": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Аутентификация",
+        "operationId": "authenticate",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Запрос на аутентификацию",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AuthUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User authenticated successfully",
+            "schema": {
+              "$ref": "#/definitions/GetUserResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/search": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Поиск пользователей по никнейму",
+        "operationId": "searchUsers",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Результаты поиска",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GetUserResponse"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{id}/friendships": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Получить список друзей пользователя",
+        "operationId": "getFriendshipList",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id пользователя",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GetFriendshipResponse"
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Добавить пользователя в друзья",
+        "operationId": "createFriendship",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id пользователя",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "запрос на добавление пользователя в друзья",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateFriendshipRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User added to friends successfully",
+            "schema": {
+              "$ref": "#/definitions/CreateFriendshipResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{id}/friendships/{friendship_id}/accept": {
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Подтвердить запрос на дружбу",
+        "operationId": "acceptFriendship",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id пользователя, получившего запрос на добавление в друзья",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "path",
+            "name": "friendship_id",
+            "description": "id дружбы",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friendship request accepted"
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{id}/friendships/{friendship_id}/decline": {
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Отклонить запрос на дружбу",
+        "operationId": "declineFriendship",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id пользователя, получившего запрос на добавление в друзья",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "path",
+            "name": "friendship_id",
+            "description": "id дружбы",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friendship request declined"
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{id}/friendships/{friendship_id}": {
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Удалить дружбу",
+        "operationId": "deleteFriendship",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "id пользователя (любого из двух друзей)",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "path",
+            "name": "friendship_id",
+            "description": "id дружбы",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friendship deleted successfully"
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessage"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ErrorMessage": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "CreateUserRequest": {
+      "type": "object",
+      "required": [
+        "name",
+        "email",
+        "password"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "user123"
+        },
+        "email": {
+          "type": "string",
+          "example": "user123@mail.ru"
+        },
+        "password": {
+          "type": "string"
+        },
+        "avatar_photo_url": {
+          "type": "string"
+        }
+      }
+    },
+    "CreateUserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        }
+      }
+    },
+    "GetUserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "user123"
+        },
+        "email": {
+          "type": "string",
+          "example": "user123@mail.ru"
+        },
+        "avatar_photo_url": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateUserRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "user123"
+        },
+        "email": {
+          "type": "string",
+          "example": "user123@mail.ru"
+        },
+        "password": {
+          "type": "string"
+        },
+        "avatar_photo_url": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateUserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "user123"
+        },
+        "email": {
+          "type": "string",
+          "example": "user123@mail.ru"
+        },
+        "avatar_photo_url": {
+          "type": "string"
+        }
+      }
+    },
+    "LoginUserRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "password"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "example": "user123@mail.ru"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "LoginUserResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "AuthUserRequest": {
+      "type": "object",
+      "required": [
+        "token"
+      ],
+      "properties": {
+        "token": {
+          "type": "string",
+          "example": "example-token"
+        }
+      }
+    },
+    "CreateFriendshipRequest": {
+      "type": "object",
+      "required": [
+        "user_id"
+      ],
+      "properties": {
+        "user_id": {
+          "type": "integer",
+          "example": "123"
+        }
+      }
+    },
+    "CreateFriendshipResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        }
+      }
+    },
+    "GetFriendshipResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 5
+        },
+        "follower_id": {
+          "type": "integer",
+          "example": 1
+        },
+        "followed_id": {
+          "type": "integer",
+          "example": 2
+        },
+        "status": {
+          "type": "string",
+          "example": "accepted"
+        }
+      }
+    }
+  }
+}
