@@ -5,7 +5,7 @@
 
 ## Deploying to Minikube
 
-1. Build, push images, and deploy (repeat for messages, servers, users)
+1. Build, push images, and deploy (repeat for messages, chatservers, users)
 
    ```
    cd messages

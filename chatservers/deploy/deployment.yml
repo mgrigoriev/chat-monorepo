@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: servers
+  name: chatservers
   namespace: main
   labels:
-    app: servers
+    app: chatservers
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: servers
+      app: chatservers
   template:
     metadata:
       labels:
-        app: servers
+        app: chatservers
     spec:
       containers:
-        - name: servers-container
-          image: mgrigoriev/servers:latest
+        - name: chatservers-container
+          image: mgrigoriev/chatservers:latest
           imagePullPolicy: "Always"
           resources:
             requests:
