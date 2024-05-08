@@ -16,7 +16,19 @@ type currentUser struct {
 	Email string `json:"email"`
 }
 
-func Authenticate(token string) (userID int, err error) {
+type AuthClient struct {
+	httpClient *http.Client
+}
+
+func NewAuthClient() *AuthClient {
+	httpClient := http.Client{Timeout: 5 * time.Second}
+
+	return &AuthClient{
+		httpClient: &httpClient,
+	}
+}
+
+func (ac *AuthClient) Authenticate(token string) (userID int, err error) {
 	data := map[string]string{"token": token}
 
 	jsonData, err := json.Marshal(data)
@@ -24,8 +36,7 @@ func Authenticate(token string) (userID int, err error) {
 		return 0, err
 	}
 
-	httpClient := http.Client{Timeout: 5 * time.Second}
-	resp, err := httpClient.Post(authURL, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := ac.httpClient.Post(authURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return 0, err
 	}
