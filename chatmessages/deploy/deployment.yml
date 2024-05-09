@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: messages
+  name: chatmessages
   namespace: main
   labels:
-    app: messages
+    app: chatmessages
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: messages
+      app: chatmessages
   template:
     metadata:
       labels:
-        app: messages
+        app: chatmessages
     spec:
       containers:
-        - name: messages-container
-          image: mgrigoriev/messages:latest
+        - name: chatmessages-container
+          image: mgrigoriev/chatmessages:latest
           imagePullPolicy: "Always"
           resources:
             requests:

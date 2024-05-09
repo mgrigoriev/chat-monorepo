@@ -15,7 +15,7 @@ func main() {
 	e.Use(middleware.Recover())
 
 	e.GET("/", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, "Hello from Messages service")
+		return c.HTML(http.StatusOK, "Hello from chatmessages service")
 	})
 
 	e.GET("/health", func(c echo.Context) error {

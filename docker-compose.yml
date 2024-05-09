@@ -1,6 +1,6 @@
 services:
-  messages:
-    build: messages/
+  chatmessages:
+    build: chatmessages/
     command: ./main
     ports:
       - "8081:8080"

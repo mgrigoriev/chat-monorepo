@@ -1,4 +1,4 @@
-module github.com/mgrigoriev/chat-monorepo/mesages
+module github.com/mgrigoriev/chat-monorepo/chatmesages
 
 go 1.22.0
 
