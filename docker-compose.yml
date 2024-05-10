@@ -3,7 +3,8 @@ services:
     build: chatmessages/
     command: ./main
     ports:
-      - "8081:8080"
+      - "8081:8080"  # REST API
+      - "9091:9090"  # gRPC
   chatservers:
     build: chatservers/
     command: ./main

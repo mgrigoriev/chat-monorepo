@@ -1,21 +1,13 @@
-// SaveChatMessage:
-// grpc_cli call --json_input --json_output localhost:8081 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":1, "recipient_id":10, "content":"hello - private message"}}'
-// grpc_cli call --json_input --json_output localhost:8081 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":2, "recipient_id":1, "content":"hello - server message"}}'
-
-// ListServerChatMessages:
-// grpc_cli call --json_input --json_output localhost:8081 ChatMessagesService/ListServerChatMessages '{"server_id":1}'
-
-// ListPrivateChatMessages:
-// grpc_cli call --json_input --json_output localhost:8081 ChatMessagesService/ListPrivateChatMessages '{"user_id":1, "other_user_id":10}'
-
 package server
 
 import (
 	"context"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 	"sync/atomic"
 
@@ -44,20 +36,79 @@ func NewServer() *server {
 }
 
 func Start() {
-	lis, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	grpcServer := grpc.NewServer()
-	pb.RegisterChatMessagesServiceServer(grpcServer, NewServer())
+	server := NewServer()
+	//server, err := NewServer()
+	//if err != nil {
+	//	log.Fatalf("failed to create server: %v", err)
+	//}
 
-	reflection.Register(grpcServer)
+	var wg sync.WaitGroup
 
-	log.Printf("server listening at %v", lis.Addr())
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		grpcServer := grpc.NewServer()
+		pb.RegisterChatMessagesServiceServer(grpcServer, server)
+
+		reflection.Register(grpcServer)
+
+		lis, err := net.Listen("tcp", ":9090")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		log.Printf("server listening at %v", lis.Addr())
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+
+		// SaveChatMessage:
+		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":1, "recipient_id":10, "content":"hello - private message"}}'
+		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":2, "recipient_id":1, "content":"hello - server message"}}'
+		// ListServerChatMessages:
+		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/ListServerChatMessages '{"server_id":1}'
+		// ListPrivateChatMessages:
+		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/ListPrivateChatMessages '{"user_id":1, "other_user_id":10}'
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		// Register gRPC server endpoint
+		// Note: Make sure the gRPC server is running properly and accessible
+		mux := runtime.NewServeMux()
+		if err := pb.RegisterChatMessagesServiceHandlerServer(ctx, mux, server); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+
+		httpServer := &http.Server{Handler: mux}
+
+		lis, err := net.Listen("tcp", ":8080")
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+
+		// Start HTTP server (and proxy calls to gRPC server endpoint)
+		log.Printf("server listening at %v", lis.Addr())
+		if err := httpServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	wg.Wait()
+
+	// SaveChatMessage:
+	// curl --location 'localhost:8080/api/v1/chatmessages' --header 'Content-Type: application/json' --data '{"user_id":1, "user_name":"john", "recipient_type":1, "recipient_id":10, "content":"hello - private message"}'
+	// curl --location 'localhost:8080/api/v1/chatmessages' --header 'Content-Type: application/json' --data '{"user_id":1, "user_name":"john", "recipient_type":2, "recipient_id":1, "content":"hello - server message"}'
+	// ListServerChatMessages:
+	// curl --location 'localhost:8080/api/v1/chatmessages/server?server_id=1'
+	// ListPrivateChatMessages:
+	// curl --location 'localhost:8080/api/v1/chatmessages/private?user_id=1&other_user_id=10'
 }
 
 // SaveChatMessage implements pb.ChatMessagesServiceServer

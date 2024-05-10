@@ -3,15 +3,51 @@ syntax = "proto3";
 package github.com.mgrigoriev.chat_monorepo.chatmessages;
 
 import "api/messages.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages;chatmessages";
+//option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+//  info: {
+//    title: "Chatmessages service";
+//    version: "1.0";
+//    contact: {
+//      name: "gRPC-Gateway project";
+//      url: "https://github.com/grpc-ecosystem/grpc-gateway";
+//      email: "none@example.com";
+//    };
+//    license: {
+//      name: "BSD 3-Clause License";
+//      url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE";
+//    };
+//  };
+//  external_docs: {
+//    url: "https://github.com/grpc-ecosystem/grpc-gateway";
+//    description: "More about gRPC-Gateway";
+//  };
+//  schemes: HTTP;
+//  schemes: HTTPS;
+//};
 
 // ChatMessagesService - сервис сообщений чата
 service ChatMessagesService {
   // SaveChatMessage - сохранить сообщение
-  rpc SaveChatMessage(SaveChatMessageRequest) returns (SaveChatMessageResponse) {}
+  rpc SaveChatMessage(SaveChatMessageRequest) returns (SaveChatMessageResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/chatmessages"
+      body: "info"
+    };
+  }
   // ListPrivateChatMessages - получить список сообщений переписки пользователя с другим пользователем
-  rpc ListPrivateChatMessages(ListPrivateChatMessagesRequest) returns (ListChatMessagesResponse) {}
+  rpc ListPrivateChatMessages(ListPrivateChatMessagesRequest) returns (ListChatMessagesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/chatmessages/private"
+    };
+  }
   // ListServerChatMessagesRequest - запрос на получение сообщений сервера
-  rpc ListServerChatMessages(ListServerChatMessagesRequest) returns (ListChatMessagesResponse) {}
+  rpc ListServerChatMessages(ListServerChatMessagesRequest) returns (ListChatMessagesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/chatmessages/server"
+    };
+  }
 }
