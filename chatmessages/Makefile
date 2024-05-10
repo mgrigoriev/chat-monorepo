@@ -83,11 +83,11 @@ vendor:	.vendor-reset .vendor-googleapis .vendor-google-protobuf .vendor-protova
 	--go_out=$(PKG_PROTO_PATH) --go_opt paths=source_relative \
 	--go-grpc_out=$(PKG_PROTO_PATH) --go-grpc_opt paths=source_relative \
 	--grpc-gateway_out=$(PKG_PROTO_PATH) --grpc-gateway_opt paths=source_relative --grpc-gateway_opt generate_unbound_methods=true \
-	$(PROTO_PATH)/messages.proto $(PROTO_PATH)/service.proto
+	$(PROTO_PATH)/chatmessages/messages.proto $(PROTO_PATH)/chatmessages/service.proto
 
 	$(PROTOC) -I $(VENDOR_PROTO_PATH) --proto_path=$(CURDIR) \
 	--openapiv2_out=. --openapiv2_opt logtostderr=true \
-	$(PROTO_PATH)/service.proto
+	$(PROTO_PATH)/chatmessages/service.proto
 
 # go mod tidy
 .tidy:
@@ -98,8 +98,8 @@ generate: .bin-deps .protoc-generate .tidy
 
 # Билд приложения
 build:
-	go build -o $(LOCAL_BIN) ./cmd/client
-	go build -o $(LOCAL_BIN) ./cmd/server
+	go build -o $(LOCAL_BIN) ./cmd/chatmessages/client
+	go build -o $(LOCAL_BIN) ./cmd/chatmessages/server
 
 run:
 	cd ./cmd && go run .
