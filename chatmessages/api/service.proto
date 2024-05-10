@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package github.com.mgrigoriev.chat_monorepo.chatmessages;
+
+import "api/messages.proto";
+
+option go_package = "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages;chatmessages";
+
+// ChatMessagesService - сервис сообщений чата
+service ChatMessagesService {
+  // SaveChatMessage - сохранить сообщение
+  rpc SaveChatMessage(SaveChatMessageRequest) returns (SaveChatMessageResponse) {}
+  // ListPrivateChatMessages - получить список сообщений переписки пользователя с другим пользователем
+  rpc ListPrivateChatMessages(ListPrivateChatMessagesRequest) returns (ListChatMessagesResponse) {}
+  // ListServerChatMessagesRequest - запрос на получение сообщений сервера
+  rpc ListServerChatMessages(ListServerChatMessagesRequest) returns (ListChatMessagesResponse) {}
+}

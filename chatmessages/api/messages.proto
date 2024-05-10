@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package github.com.mgrigoriev.chat_monorepo.chatmessages;
+
+option go_package = "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages;chatmessages";
+
+// ChatMessageInfo - детали сообщения
+message ChatMessageInfo {
+  enum RECIPIENT_TYPE {
+    UNSPECIFIED = 0;
+    USER = 1;
+    SERVER = 2;
+  }
+
+  // user_id - id автора сообщения
+  uint64 user_id = 1 [json_name = "user_id"];
+  //user_name - имя автора сообщения
+  string user_name = 2 [json_name = "user_name"];
+  // recipient_type - тип получателя сообщения
+  RECIPIENT_TYPE recipient_type = 3 [json_name = "recipient_type"];
+  // recipient_id - id получателя сообщения
+  uint64 recipient_id = 4 [json_name = "recipient_id"];
+  // content - содержимое сообщения
+  string content = 5 [json_name = "content"];
+}
+
+// ChatMessage
+message ChatMessage {
+  // id - уникальный идентификатор сообщения
+  uint64 id = 1 [json_name = "id"];
+  // info - детали сообщения
+  ChatMessageInfo info = 2 [json_name = "info"];
+}
+
+// SaveChatMessageRequest - запрос SaveChatMessage
+message SaveChatMessageRequest {
+  // info - детали сообщения
+  ChatMessageInfo info = 1 [json_name = "info"];
+}
+
+// SaveChatMessageResponse - ответ SaveChatMessage
+message SaveChatMessageResponse {
+  // id - уникальный идентификатор сообщения
+  uint64 id = 1 [json_name = "id"];
+}
+
+// ListPrivateChatMessagesRequest - запрос на получение сообщений переписки пользователя с другим пользователем
+message ListPrivateChatMessagesRequest {
+  // user_id - id пользователя
+  uint64 user_id = 1 [json_name = "user_id"];
+  // other_user_id - id собеседника пользователя
+  uint64 other_user_id = 2 [json_name = "other_user_id"];
+}
+
+// ListServerChatMessagesRequest - запрос на получение сообщений сервера
+message ListServerChatMessagesRequest {
+  // server_id - id сервера
+  uint64 server_id = 2 [json_name = "server_id"];
+}
+
+// ListChatMessagesResponse - ответ ListChatMessages
+message ListChatMessagesResponse {
+  // chat_messages - все сообщения
+  repeated ChatMessage chat_messages = 1 [json_name = "chat_messages"];
+}
