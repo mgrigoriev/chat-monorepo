@@ -1,0 +1,253 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/chatmessages/service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ChatMessagesService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/chatmessages": {
+      "post": {
+        "summary": "SaveChatMessage - сохранить сообщение",
+        "operationId": "ChatMessagesService_SaveChatMessage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatmessagesSaveChatMessageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "info",
+            "description": "info - детали сообщения",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/chatmessagesChatMessageInfo",
+              "required": [
+                "info"
+              ]
+            }
+          }
+        ],
+        "tags": [
+          "ChatMessagesService"
+        ]
+      }
+    },
+    "/api/v1/chatmessages/private": {
+      "get": {
+        "summary": "ListPrivateChatMessages - получить список сообщений переписки пользователя с другим пользователем",
+        "operationId": "ChatMessagesService_ListPrivateChatMessages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatmessagesListChatMessagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "description": "user_id - id пользователя",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "other_user_id",
+            "description": "other_user_id - id собеседника пользователя",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ChatMessagesService"
+        ]
+      }
+    },
+    "/api/v1/chatmessages/server": {
+      "get": {
+        "summary": "ListServerChatMessagesRequest - запрос на получение сообщений сервера",
+        "operationId": "ChatMessagesService_ListServerChatMessages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/chatmessagesListChatMessagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "server_id",
+            "description": "server_id - id сервера",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ChatMessagesService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ChatMessageInfoRECIPIENT_TYPE": {
+      "type": "string",
+      "enum": [
+        "UNSPECIFIED",
+        "USER",
+        "SERVER"
+      ],
+      "default": "UNSPECIFIED"
+    },
+    "chatmessagesChatMessage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "id - уникальный идентификатор сообщения"
+        },
+        "info": {
+          "$ref": "#/definitions/chatmessagesChatMessageInfo",
+          "title": "info - детали сообщения"
+        }
+      },
+      "title": "ChatMessage"
+    },
+    "chatmessagesChatMessageInfo": {
+      "type": "object",
+      "example": {
+        "user_id": 1,
+        "user_name": "joe",
+        "recipient_type": 1,
+        "recipient_id": 2,
+        "content": "hello"
+      },
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "user_id - id автора сообщения"
+        },
+        "user_name": {
+          "type": "string",
+          "title": "user_name - имя автора сообщения"
+        },
+        "recipient_type": {
+          "$ref": "#/definitions/ChatMessageInfoRECIPIENT_TYPE",
+          "title": "recipient_type - тип получателя сообщения"
+        },
+        "recipient_id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "recipient_id - id получателя сообщения"
+        },
+        "content": {
+          "type": "string",
+          "title": "content - содержимое сообщения"
+        }
+      },
+      "description": "ChatMessageInfo - детали сообщения",
+      "title": "ChatMessageInfo",
+      "required": [
+        "user_id",
+        "user_name",
+        "recipient_type",
+        "recipient_id",
+        "content"
+      ]
+    },
+    "chatmessagesListChatMessagesResponse": {
+      "type": "object",
+      "properties": {
+        "chat_messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/chatmessagesChatMessage"
+          },
+          "title": "chat_messages - все сообщения"
+        }
+      },
+      "title": "ListChatMessagesResponse - ответ ListChatMessages"
+    },
+    "chatmessagesSaveChatMessageResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "id - уникальный идентификатор сообщения"
+        }
+      },
+      "title": "SaveChatMessageResponse - ответ SaveChatMessage"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
