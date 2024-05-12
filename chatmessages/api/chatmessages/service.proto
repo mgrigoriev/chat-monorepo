@@ -7,6 +7,14 @@ import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages;chatmessages";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Chatmessages service";
+    version: "1.0";
+  };
+  host: "localhost:8081";
+  schemes: HTTP;
+};
 
 // ChatMessagesService - сервис сообщений чата
 service ChatMessagesService {

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -16,10 +18,15 @@ import (
 
 	"github.com/bufbuild/protovalidate-go"
 	pb "github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/api/chatmessages"
+	"github.com/rs/cors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+const grpcPort = "9090"
+const httpPort = "8080"
+const swaggerPort = "8888"
 
 var idSerial uint64
 
@@ -76,7 +83,7 @@ func Start() {
 
 		reflection.Register(grpcServer)
 
-		lis, err := net.Listen("tcp", ":9090")
+		lis, err := net.Listen("tcp", ":"+grpcPort)
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
@@ -98,6 +105,13 @@ func Start() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		corsOptions := cors.Options{
+			AllowedOrigins: []string{"*"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders: []string{"*"},
+		}
+		corsHandler := cors.New(corsOptions).Handler
+
 		// Register gRPC server endpoint
 		// Note: Make sure the gRPC server is running properly and accessible
 		mux := runtime.NewServeMux()
@@ -105,9 +119,9 @@ func Start() {
 			log.Fatalf("failed to serve: %v", err)
 		}
 
-		httpServer := &http.Server{Handler: mux}
+		httpServer := &http.Server{Handler: corsHandler(mux)}
 
-		lis, err := net.Listen("tcp", ":8080")
+		lis, err := net.Listen("tcp", ":"+httpPort)
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
@@ -125,6 +139,15 @@ func Start() {
 		// curl --location 'localhost:8080/api/v1/chatmessages/server?server_id=1'
 		// ListPrivateChatMessages:
 		// curl --location 'localhost:8080/api/v1/chatmessages/private?user_id=1&other_user_id=10'
+	}()
+
+	wg.Add(1)
+	go func() {
+		e := echo.New()
+		e.Use(middleware.Logger())
+		e.Static("/sw", "./swaggerui")
+
+		e.Logger.Fatal(e.Start(":" + swaggerPort))
 	}()
 
 	wg.Wait()

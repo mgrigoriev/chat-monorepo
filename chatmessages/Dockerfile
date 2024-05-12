@@ -10,11 +10,14 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/main cmd/main.go
 
-FROM scratch AS final
+FROM alpine:latest AS final
 
 WORKDIR /
 
 COPY --from=build /bin/main /main
+
+RUN mkdir /swaggerui
+COPY --from=build /app/swaggerui swaggerui/
 
 EXPOSE 8080
 ENTRYPOINT ["/main"]
