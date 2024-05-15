@@ -1,34 +1,13 @@
-package authclient
+package auth
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 )
 
-const authURL = "http://users:8080/api/v1/users/auth"
-
-type currentUser struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-type AuthClient struct {
-	httpClient *http.Client
-}
-
-func NewAuthClient() *AuthClient {
-	httpClient := http.Client{Timeout: 5 * time.Second}
-
-	return &AuthClient{
-		httpClient: &httpClient,
-	}
-}
-
-func (ac *AuthClient) Authenticate(token string) (userID int, err error) {
+func (ac *Client) Authenticate(token string) (userID int, err error) {
 	data := map[string]string{"token": token}
 
 	jsonData, err := json.Marshal(data)
