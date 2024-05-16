@@ -11,7 +11,7 @@ func (s *Server) searchChatServers(c echo.Context) error {
 
 	chatServers, err := s.Usecase.SearchChatServers(c.Request().Context(), term)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, s.httpErrorMsg(err))
+		return c.JSON(http.StatusInternalServerError, s.httpErrorMsg(err))
 	}
 
 	var response []serverModels.GetChatServerResponse
