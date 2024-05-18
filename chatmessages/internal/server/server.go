@@ -5,45 +5,54 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/usecases"
+	pb "github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/api/chatmessages"
+	"github.com/rs/cors"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 	"log"
 	"net"
 	"net/http"
 	"sync"
-	"sync/atomic"
-
-	"github.com/bufbuild/protovalidate-go"
-	pb "github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/api/chatmessages"
-	"github.com/rs/cors"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
-
-const grpcPort = "9090"
-const httpPort = "8080"
-const swaggerPort = "8888"
 
 var idSerial uint64
 
-// server is used to implement pb.ChatMessagesServiceServer.
-type server struct {
+type Config struct {
+	GrpcPort    string
+	HttpPort    string
+	SwaggerPort string
+}
+
+type Deps struct {
+	Usecase usecases.UsecaseInterface
+}
+
+// Server is used to implement pb.ChatMessagesServiceServer.
+type Server struct {
 	// UnimplementedChatMessagesServiceServer must be embedded to have forward compatible implementations.
 	pb.UnimplementedChatMessagesServiceServer
 	mx                  sync.RWMutex
 	serverChatMessages  map[uint64]*pb.ChatMessageInfo
 	privateChatMessages map[uint64]*pb.ChatMessageInfo
 	validator           *protovalidate.Validator
+	cfg                 Config
+	Deps
 }
 
-func NewServer() (*server, error) {
-	srv := &server{
+func NewServer(ctx context.Context, cfg Config, d Deps) (*Server, error) {
+	srv := &Server{
 		serverChatMessages:  make(map[uint64]*pb.ChatMessageInfo),
 		privateChatMessages: make(map[uint64]*pb.ChatMessageInfo),
+		Deps:                d,
+		cfg:                 cfg,
 	}
 
 	validator, err := protovalidate.New(
@@ -62,16 +71,7 @@ func NewServer() (*server, error) {
 	return srv, nil
 }
 
-func Start() {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	server, err := NewServer()
-	if err != nil {
-		log.Fatalf("failed to create server: %v", err)
-	}
-
+func (server *Server) Start(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -83,7 +83,7 @@ func Start() {
 
 		reflection.Register(grpcServer)
 
-		lis, err := net.Listen("tcp", ":"+grpcPort)
+		lis, err := net.Listen("tcp", ":"+server.cfg.GrpcPort)
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
@@ -121,7 +121,7 @@ func Start() {
 
 		httpServer := &http.Server{Handler: corsHandler(mux)}
 
-		lis, err := net.Listen("tcp", ":"+httpPort)
+		lis, err := net.Listen("tcp", ":"+server.cfg.HttpPort)
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
@@ -147,7 +147,7 @@ func Start() {
 		e.Use(middleware.Logger())
 		e.Static("/sw", "./swaggerui")
 
-		e.Logger.Fatal(e.Start(":" + swaggerPort))
+		e.Logger.Fatal(e.Start(":" + server.cfg.SwaggerPort))
 	}()
 
 	wg.Wait()
@@ -185,85 +185,4 @@ func rpcValidationError(err error) error {
 	}
 
 	return status.Error(codes.Internal, err.Error())
-}
-
-// SaveChatMessage implements pb.ChatMessagesServiceServer
-func (s *server) SaveChatMessage(_ context.Context, req *pb.SaveChatMessageRequest) (*pb.SaveChatMessageResponse, error) {
-	if err := s.validator.Validate(req); err != nil {
-		return nil, rpcValidationError(err)
-	}
-
-	info := req.GetInfo()
-
-	log.Printf("SaveChatMessage: received: %s", info.GetContent())
-
-	id := atomic.AddUint64(&idSerial, 1)
-
-	s.mx.Lock()
-	if info.RecipientType == pb.ChatMessageInfo_SERVER {
-		s.serverChatMessages[id] = info
-	} else {
-		s.privateChatMessages[id] = info
-	}
-	s.mx.Unlock()
-
-	return &pb.SaveChatMessageResponse{
-		Id: id,
-	}, nil
-}
-
-// ListServerChatMessages implements pb.ChatMessagesServiceServer
-func (s *server) ListServerChatMessages(_ context.Context, req *pb.ListServerChatMessagesRequest) (*pb.ListChatMessagesResponse, error) {
-	if err := s.validator.Validate(req); err != nil {
-		return nil, rpcValidationError(err)
-	}
-
-	serverID := req.GetServerId()
-
-	log.Println("ListServerChatMessages: received")
-
-	s.mx.RLock()
-	defer s.mx.RUnlock()
-
-	chatMessages := make([]*pb.ChatMessage, 0, len(s.serverChatMessages))
-	for id, msg := range s.serverChatMessages {
-		if msg.RecipientId == serverID {
-			chatMessages = append(chatMessages, &pb.ChatMessage{
-				Id:   id,
-				Info: msg,
-			})
-		}
-	}
-
-	return &pb.ListChatMessagesResponse{
-		ChatMessages: chatMessages,
-	}, nil
-}
-
-func (s *server) ListPrivateChatMessages(_ context.Context, req *pb.ListPrivateChatMessagesRequest) (*pb.ListChatMessagesResponse, error) {
-	if err := s.validator.Validate(req); err != nil {
-		return nil, rpcValidationError(err)
-	}
-
-	userID := req.UserId
-	otherUserID := req.OtherUserId
-
-	log.Println("ListPrivateChatMessages: received")
-
-	s.mx.RLock()
-	defer s.mx.RUnlock()
-
-	chatMessages := make([]*pb.ChatMessage, 0, len(s.privateChatMessages))
-	for id, msg := range s.privateChatMessages {
-		if (msg.UserId == userID && msg.RecipientId == otherUserID) || (msg.UserId == otherUserID && msg.RecipientId == userID) {
-			chatMessages = append(chatMessages, &pb.ChatMessage{
-				Id:   id,
-				Info: msg,
-			})
-		}
-	}
-
-	return &pb.ListChatMessagesResponse{
-		ChatMessages: chatMessages,
-	}, nil
 }

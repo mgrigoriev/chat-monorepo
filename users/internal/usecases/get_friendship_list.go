@@ -7,6 +7,7 @@ import (
 
 func (uc *Usecase) GetFriendshipList(ctx context.Context, userID models.UserID) (*[]models.Friendship, error) {
 	//return nil, models.ErrNotImplemented
+	// TODO: Call repo
 	return &[]models.Friendship{
 		{
 			ID:         10,

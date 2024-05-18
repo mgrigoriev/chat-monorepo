@@ -7,6 +7,7 @@ import (
 
 func (uc *Usecase) GetUserChatServers(ctx context.Context, userID models.UserID) (*[]models.ChatServer, error) {
 	// return nil, models.ErrNotImplemented
+	// TODO: Call repo
 	return &[]models.ChatServer{
 		{
 			ID:     1,

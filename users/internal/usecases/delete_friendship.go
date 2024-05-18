@@ -7,5 +7,6 @@ import (
 
 func (uc *Usecase) DeleteFriendship(ctx context.Context, friendshipID models.FriendshipID) error {
 	//return models.ErrNotImplemented
+	// TODO: Call repo
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 
 func (uc *Usecase) GetUserByID(ctx context.Context, id models.UserID) (*models.User, error) {
 	//return nil, models.ErrNotImplemented
-
+	// TODO: Call repo
 	return &models.User{
 		ID:             1,
 		Name:           "Test",

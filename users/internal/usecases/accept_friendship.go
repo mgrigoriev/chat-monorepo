@@ -7,5 +7,8 @@ import (
 
 func (uc *Usecase) AcceptFriendship(ctx context.Context, friendshipID models.FriendshipID) error {
 	// return models.ErrNotImplemented
+
+	// TODO: Call repo
+
 	return nil
 }
