@@ -15,10 +15,10 @@ func (uc *Usecase) Auth(ctx context.Context, token models.AuthToken) (*models.Us
 		return nil, errors.New("invalid token")
 	}
 
-	return &models.User{
-		ID:             1,
-		Name:           "Test",
-		Email:          "test@test.com",
-		AvatarPhotoURL: "http://test.com/1.jpg",
-	}, nil
+	user, err := uc.Repo.GetUserByToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

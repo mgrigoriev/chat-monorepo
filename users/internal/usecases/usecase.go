@@ -19,7 +19,9 @@ type UsecaseInterface interface {
 	DeleteFriendship(ctx context.Context, friendshipID models.FriendshipID) error
 }
 
-type UsersRepoInterface interface{}
+type UsersRepoInterface interface {
+	GetUserByToken(token models.AuthToken) (*models.User, error)
+}
 
 type Deps struct {
 	Repo UsersRepoInterface
