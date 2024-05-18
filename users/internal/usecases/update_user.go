@@ -7,7 +7,7 @@ import (
 
 func (uc *Usecase) UpdateUser(ctx context.Context, id models.UserID, user models.User) (*models.User, error) {
 	//return nil, models.ErrNotImplemented
-
+	// TODO: Call repo
 	return &models.User{
 		ID:             30,
 		Name:           "Updated User",

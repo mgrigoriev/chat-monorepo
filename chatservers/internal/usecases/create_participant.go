@@ -7,5 +7,6 @@ import (
 
 func (uc *Usecase) CreateParticipant(ctx context.Context, chatServerID models.ChatServerID, userID models.UserID) (models.ParticipantID, error) {
 	//return 0, models.ErrNotImplemented
+	// TODO: Call repo
 	return 10, nil
 }

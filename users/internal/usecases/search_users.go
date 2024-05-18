@@ -7,7 +7,7 @@ import (
 
 func (uc *Usecase) SearchUsers(ctx context.Context, term string) (*[]models.User, error) {
 	//return nil, models.ErrNotImplemented
-
+	// TODO: Call repo
 	return &[]models.User{
 		{
 			ID:             1,

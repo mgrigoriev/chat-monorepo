@@ -9,6 +9,8 @@ import (
 func (uc *Usecase) Auth(ctx context.Context, token models.AuthToken) (*models.User, error) {
 	//return nil, models.ErrNotImplemented
 
+	// TODO: Call repo
+
 	if token != "valid-token" {
 		return nil, errors.New("invalid token")
 	}
