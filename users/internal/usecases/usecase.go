@@ -19,7 +19,7 @@ type UsecaseInterface interface {
 	DeleteFriendship(ctx context.Context, friendshipID models.FriendshipID) error
 }
 
-//go:generate mockery --name=UsersStorageInterface --filename=users_storage_mock.go --disable-version-string
+//go:generate mockery --name=UsersStorage --filename=users_storage_mock.go --disable-version-string
 type UsersStorage interface {
 	GetUserByToken(token models.AuthToken) (*models.User, error)
 	GetUserByID(id models.UserID) (*models.User, error)
