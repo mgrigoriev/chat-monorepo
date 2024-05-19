@@ -6,12 +6,10 @@ import (
 )
 
 func (uc *Usecase) UpdateUser(ctx context.Context, id models.UserID, user models.User) (*models.User, error) {
-	//return nil, models.ErrNotImplemented
-	// TODO: Call repo
-	return &models.User{
-		ID:             30,
-		Name:           "Updated User",
-		Email:          "test@test.com",
-		AvatarPhotoURL: "https://test.com/1.jpg",
-	}, nil
+	updatedUser, err := uc.UsersStorage.UpdateUser(id, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedUser, nil
 }

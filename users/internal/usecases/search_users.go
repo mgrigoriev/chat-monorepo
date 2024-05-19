@@ -6,14 +6,10 @@ import (
 )
 
 func (uc *Usecase) SearchUsers(ctx context.Context, term string) (*[]models.User, error) {
-	//return nil, models.ErrNotImplemented
-	// TODO: Call repo
-	return &[]models.User{
-		{
-			ID:             1,
-			Name:           "Test",
-			Email:          "test@test.com",
-			AvatarPhotoURL: "https://test.com/1.jpg",
-		},
-	}, nil
+	users, err := uc.UsersStorage.GetUsersByNameSubstring(term)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

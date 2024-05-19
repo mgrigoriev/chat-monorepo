@@ -6,9 +6,10 @@ import (
 )
 
 func (uc *Usecase) AcceptFriendship(ctx context.Context, friendshipID models.FriendshipID) error {
-	// return models.ErrNotImplemented
-
-	// TODO: Call repo
+	err := uc.UsersStorage.UpdateFriendshipStatus(friendshipID, "accepted")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

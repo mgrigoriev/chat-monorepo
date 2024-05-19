@@ -6,7 +6,11 @@ import (
 )
 
 func (uc *Usecase) Login(ctx context.Context, login string, password string) (models.AuthToken, error) {
-	//return "", models.ErrNotImplemented
-	// TODO: Call repo
+	_, err := uc.UsersStorage.GetUserByLoginAndPassword(login, password)
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: Update logic
 	return "valid-token", nil
 }

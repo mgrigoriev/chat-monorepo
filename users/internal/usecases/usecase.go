@@ -19,12 +19,22 @@ type UsecaseInterface interface {
 	DeleteFriendship(ctx context.Context, friendshipID models.FriendshipID) error
 }
 
-type UsersRepoInterface interface {
+//go:generate mockery --name=UsersStorageInterface --filename=users_storage_mock.go --disable-version-string
+type UsersStorage interface {
 	GetUserByToken(token models.AuthToken) (*models.User, error)
+	GetUserByID(id models.UserID) (*models.User, error)
+	GetUserByLoginAndPassword(login string, password string) (*models.User, error)
+	CreateUser(user models.User) (models.UserID, error)
+	UpdateUser(id models.UserID, user models.User) (*models.User, error)
+	GetUsersByNameSubstring(nameSubstring string) (*[]models.User, error)
+	GetFriendshipsByUserID(userID models.UserID) (*[]models.Friendship, error)
+	CreateFriendship(followerID models.UserID, followedID models.UserID) (models.FriendshipID, error)
+	UpdateFriendshipStatus(friendshipID models.FriendshipID, status string) error
+	DeleteFriendship(friendshipID models.FriendshipID) error
 }
 
 type Deps struct {
-	Repo UsersRepoInterface
+	UsersStorage
 }
 
 type Usecase struct {

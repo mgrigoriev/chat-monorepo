@@ -6,7 +6,10 @@ import (
 )
 
 func (uc *Usecase) CreateUser(ctx context.Context, user models.User) (models.UserID, error) {
-	//return 0, models.ErrNotImplemented
-	// TODO: Call repo
-	return 20, nil
+	userID, err := uc.UsersStorage.CreateUser(user)
+	if err != nil {
+		return 0, err
+	}
+
+	return userID, nil
 }

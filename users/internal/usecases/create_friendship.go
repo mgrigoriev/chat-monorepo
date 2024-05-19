@@ -6,9 +6,10 @@ import (
 )
 
 func (uc *Usecase) CreateFriendship(ctx context.Context, followerID models.UserID, followedID models.UserID) (models.FriendshipID, error) {
-	//return 0, models.ErrNotImplemented
+	friendshipID, err := uc.UsersStorage.CreateFriendship(followerID, followedID)
+	if err != nil {
+		return 0, err
+	}
 
-	// TODO: Call repo
-
-	return 10, nil
+	return friendshipID, nil
 }
