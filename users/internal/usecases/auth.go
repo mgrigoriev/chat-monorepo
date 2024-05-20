@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) Auth(ctx context.Context, token models.AuthToken) (*models.User, error) {
-	user, err := uc.UsersStorage.GetUserByToken(token)
+	user, err := uc.UsersStorage.GetUserByToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}

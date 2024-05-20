@@ -21,16 +21,16 @@ type UsecaseInterface interface {
 
 //go:generate mockery --name=UsersStorage --filename=users_storage_mock.go --disable-version-string
 type UsersStorage interface {
-	GetUserByToken(token models.AuthToken) (*models.User, error)
-	GetUserByID(id models.UserID) (*models.User, error)
-	GetUserByLoginAndPassword(login string, password string) (*models.User, error)
-	CreateUser(user models.User) (models.UserID, error)
-	UpdateUser(id models.UserID, user models.User) (*models.User, error)
-	GetUsersByNameSubstring(nameSubstring string) (*[]models.User, error)
-	GetFriendshipsByUserID(userID models.UserID) (*[]models.Friendship, error)
-	CreateFriendship(followerID models.UserID, followedID models.UserID) (models.FriendshipID, error)
-	UpdateFriendshipStatus(friendshipID models.FriendshipID, status string) error
-	DeleteFriendship(friendshipID models.FriendshipID) error
+	GetUserByToken(ctx context.Context, token models.AuthToken) (*models.User, error)
+	GetUserByID(ctx context.Context, id models.UserID) (*models.User, error)
+	GetUserByLoginAndPassword(ctx context.Context, login string, password string) (*models.User, error)
+	CreateUser(ctx context.Context, user models.User) (models.UserID, error)
+	UpdateUser(ctx context.Context, id models.UserID, user models.User) (*models.User, error)
+	GetUsersByNameSubstring(ctx context.Context, nameSubstring string) (*[]models.User, error)
+	GetFriendshipsByUserID(ctx context.Context, userID models.UserID) (*[]models.Friendship, error)
+	CreateFriendship(ctx context.Context, followerID models.UserID, followedID models.UserID) (models.FriendshipID, error)
+	UpdateFriendshipStatus(ctx context.Context, friendshipID models.FriendshipID, status string) error
+	DeleteFriendship(ctx context.Context, friendshipID models.FriendshipID) error
 }
 
 type Deps struct {

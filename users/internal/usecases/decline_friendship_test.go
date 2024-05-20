@@ -5,11 +5,10 @@ import (
 	"errors"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/models"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/usecases/mocks"
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func Test_usecase_CreateUser(t *testing.T) {
+func Test_usecase_DeclineFriendship(t *testing.T) {
 	// prepare
 	var (
 		ctx = context.Background() // dummy
@@ -18,20 +17,14 @@ func Test_usecase_CreateUser(t *testing.T) {
 		UsersStorage *mocks.UsersStorage
 	}
 	type args struct {
-		ctx  context.Context
-		user models.User
-	}
-	var user = models.User{
-		Name:           "Test User",
-		Email:          "test@test.com",
-		Password:       "qwerty",
-		AvatarPhotoURL: "https://test.com/test.jpg",
+		ctx          context.Context
+		friendshipID models.FriendshipID
+		status       string
 	}
 
 	tests := []struct {
 		name    string
 		args    args
-		want    models.UserID
 		wantErr error
 		on      func(*fields)
 		assert  func(*testing.T, *fields)
@@ -39,28 +32,28 @@ func Test_usecase_CreateUser(t *testing.T) {
 		{
 			name: "Test 1. Positive.",
 			args: args{
-				ctx:  ctx, // dummy
-				user: user,
+				ctx:          ctx, // dummy
+				friendshipID: models.FriendshipID(1),
+				status:       "declined",
 			},
-			want:    models.UserID(1),
 			wantErr: nil,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(1), nil).
+				f.UsersStorage.On("UpdateFriendshipStatus", ctx, models.FriendshipID(1), "declined").
+					Return(nil).
 					Once()
 			},
 		},
 		{
 			name: "Test 2. Negative",
 			args: args{
-				ctx:  ctx, // dummy
-				user: user,
+				ctx:          ctx, // dummy
+				friendshipID: models.FriendshipID(1),
+				status:       "declined",
 			},
-			want:    models.UserID(0),
-			wantErr: models.ErrAlreadyExists,
+			wantErr: models.ErrDoesNotExist,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(0), models.ErrAlreadyExists).
+				f.UsersStorage.On("UpdateFriendshipStatus", ctx, models.FriendshipID(1), "declined").
+					Return(models.ErrDoesNotExist).
 					Once()
 			},
 		},
@@ -82,15 +75,13 @@ func Test_usecase_CreateUser(t *testing.T) {
 			}
 
 			// act
-			got, err := uc.CreateUser(tt.args.ctx, tt.args.user)
+			err := uc.DeclineFriendship(tt.args.ctx, tt.args.friendshipID)
 
 			// assert
 			if err != nil && !errors.Is(err, tt.wantErr) {
-				t.Errorf("usecase.CreateUser() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("usecase.DeclineFriendship() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-
-			assert.Equal(t, tt.want, got)
 		})
 	}
 }

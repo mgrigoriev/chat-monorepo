@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) CreateFriendship(ctx context.Context, followerID models.UserID, followedID models.UserID) (models.FriendshipID, error) {
-	friendshipID, err := uc.UsersStorage.CreateFriendship(followerID, followedID)
+	friendshipID, err := uc.UsersStorage.CreateFriendship(ctx, followerID, followedID)
 	if err != nil {
 		return 0, err
 	}

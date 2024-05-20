@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_usecase_CreateUser(t *testing.T) {
+func Test_usecase_UpdateUser(t *testing.T) {
 	// prepare
 	var (
 		ctx = context.Background() // dummy
@@ -19,19 +19,21 @@ func Test_usecase_CreateUser(t *testing.T) {
 	}
 	type args struct {
 		ctx  context.Context
-		user models.User
+		id   models.UserID
+		user *models.User
 	}
+
 	var user = models.User{
-		Name:           "Test User",
+		ID:             1,
+		Name:           "Updated User",
 		Email:          "test@test.com",
-		Password:       "qwerty",
 		AvatarPhotoURL: "https://test.com/test.jpg",
 	}
 
 	tests := []struct {
 		name    string
 		args    args
-		want    models.UserID
+		want    *models.User
 		wantErr error
 		on      func(*fields)
 		assert  func(*testing.T, *fields)
@@ -40,13 +42,14 @@ func Test_usecase_CreateUser(t *testing.T) {
 			name: "Test 1. Positive.",
 			args: args{
 				ctx:  ctx, // dummy
-				user: user,
+				id:   models.UserID(1),
+				user: &user,
 			},
-			want:    models.UserID(1),
+			want:    &user,
 			wantErr: nil,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(1), nil).
+				f.UsersStorage.On("UpdateUser", ctx, models.UserID(1), user).
+					Return(&user, nil).
 					Once()
 			},
 		},
@@ -54,13 +57,14 @@ func Test_usecase_CreateUser(t *testing.T) {
 			name: "Test 2. Negative",
 			args: args{
 				ctx:  ctx, // dummy
-				user: user,
+				id:   models.UserID(1),
+				user: &user,
 			},
-			want:    models.UserID(0),
-			wantErr: models.ErrAlreadyExists,
+			want:    nil,
+			wantErr: models.ErrDoesNotExist,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(0), models.ErrAlreadyExists).
+				f.UsersStorage.On("UpdateUser", ctx, models.UserID(1), user).
+					Return(nil, models.ErrDoesNotExist).
 					Once()
 			},
 		},
@@ -82,11 +86,11 @@ func Test_usecase_CreateUser(t *testing.T) {
 			}
 
 			// act
-			got, err := uc.CreateUser(tt.args.ctx, tt.args.user)
+			got, err := uc.UpdateUser(tt.args.ctx, tt.args.id, *tt.args.user)
 
 			// assert
 			if err != nil && !errors.Is(err, tt.wantErr) {
-				t.Errorf("usecase.CreateUser() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("usecase.UpdateUser() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 

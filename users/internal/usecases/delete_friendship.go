@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) DeleteFriendship(ctx context.Context, friendshipID models.FriendshipID) error {
-	err := uc.UsersStorage.DeleteFriendship(friendshipID)
+	err := uc.UsersStorage.DeleteFriendship(ctx, friendshipID)
 	if err != nil {
 		return err
 	}

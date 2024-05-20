@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) CreateUser(ctx context.Context, user models.User) (models.UserID, error) {
-	userID, err := uc.UsersStorage.CreateUser(user)
+	userID, err := uc.UsersStorage.CreateUser(ctx, user)
 	if err != nil {
 		return 0, err
 	}

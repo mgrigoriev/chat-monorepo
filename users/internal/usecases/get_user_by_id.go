@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) GetUserByID(ctx context.Context, id models.UserID) (*models.User, error) {
-	user, err := uc.UsersStorage.GetUserByID(id)
+	user, err := uc.UsersStorage.GetUserByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

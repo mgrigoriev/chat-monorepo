@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_usecase_CreateUser(t *testing.T) {
+func Test_usecase_CreateFriendship(t *testing.T) {
 	// prepare
 	var (
 		ctx = context.Background() // dummy
@@ -18,20 +18,15 @@ func Test_usecase_CreateUser(t *testing.T) {
 		UsersStorage *mocks.UsersStorage
 	}
 	type args struct {
-		ctx  context.Context
-		user models.User
-	}
-	var user = models.User{
-		Name:           "Test User",
-		Email:          "test@test.com",
-		Password:       "qwerty",
-		AvatarPhotoURL: "https://test.com/test.jpg",
+		ctx        context.Context
+		followerID models.UserID
+		followedID models.UserID
 	}
 
 	tests := []struct {
 		name    string
 		args    args
-		want    models.UserID
+		want    models.FriendshipID
 		wantErr error
 		on      func(*fields)
 		assert  func(*testing.T, *fields)
@@ -39,28 +34,30 @@ func Test_usecase_CreateUser(t *testing.T) {
 		{
 			name: "Test 1. Positive.",
 			args: args{
-				ctx:  ctx, // dummy
-				user: user,
+				ctx:        ctx, // dummy
+				followerID: models.UserID(1),
+				followedID: models.UserID(2),
 			},
-			want:    models.UserID(1),
+			want:    models.FriendshipID(123),
 			wantErr: nil,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(1), nil).
+				f.UsersStorage.On("CreateFriendship", ctx, models.UserID(1), models.UserID(2)).
+					Return(models.FriendshipID(123), nil).
 					Once()
 			},
 		},
 		{
 			name: "Test 2. Negative",
 			args: args{
-				ctx:  ctx, // dummy
-				user: user,
+				ctx:        ctx, // dummy
+				followerID: models.UserID(1),
+				followedID: models.UserID(2),
 			},
-			want:    models.UserID(0),
+			want:    models.FriendshipID(0),
 			wantErr: models.ErrAlreadyExists,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(0), models.ErrAlreadyExists).
+				f.UsersStorage.On("CreateFriendship", ctx, models.UserID(1), models.UserID(2)).
+					Return(models.FriendshipID(0), models.ErrAlreadyExists).
 					Once()
 			},
 		},
@@ -82,11 +79,11 @@ func Test_usecase_CreateUser(t *testing.T) {
 			}
 
 			// act
-			got, err := uc.CreateUser(tt.args.ctx, tt.args.user)
+			got, err := uc.CreateFriendship(tt.args.ctx, tt.args.followerID, tt.args.followedID)
 
 			// assert
 			if err != nil && !errors.Is(err, tt.wantErr) {
-				t.Errorf("usecase.CreateUser() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("usecase.CreateFriendship() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 

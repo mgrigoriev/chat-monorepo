@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) UpdateUser(ctx context.Context, id models.UserID, user models.User) (*models.User, error) {
-	updatedUser, err := uc.UsersStorage.UpdateUser(id, user)
+	updatedUser, err := uc.UsersStorage.UpdateUser(ctx, id, user)
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_usecase_CreateUser(t *testing.T) {
+func Test_usecase_GetFriendshipsList(t *testing.T) {
 	// prepare
 	var (
 		ctx = context.Background() // dummy
@@ -18,20 +18,23 @@ func Test_usecase_CreateUser(t *testing.T) {
 		UsersStorage *mocks.UsersStorage
 	}
 	type args struct {
-		ctx  context.Context
-		user models.User
+		ctx    context.Context
+		userID models.UserID
 	}
-	var user = models.User{
-		Name:           "Test User",
-		Email:          "test@test.com",
-		Password:       "qwerty",
-		AvatarPhotoURL: "https://test.com/test.jpg",
+
+	var friendships = []models.Friendship{
+		{
+			ID:         1,
+			FollowerID: 2,
+			FollowedID: 3,
+			Status:     "accepted",
+		},
 	}
 
 	tests := []struct {
 		name    string
 		args    args
-		want    models.UserID
+		want    *[]models.Friendship
 		wantErr error
 		on      func(*fields)
 		assert  func(*testing.T, *fields)
@@ -39,28 +42,14 @@ func Test_usecase_CreateUser(t *testing.T) {
 		{
 			name: "Test 1. Positive.",
 			args: args{
-				ctx:  ctx, // dummy
-				user: user,
+				ctx:    ctx, // dummy
+				userID: models.UserID(1),
 			},
-			want:    models.UserID(1),
+			want:    &friendships,
 			wantErr: nil,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(1), nil).
-					Once()
-			},
-		},
-		{
-			name: "Test 2. Negative",
-			args: args{
-				ctx:  ctx, // dummy
-				user: user,
-			},
-			want:    models.UserID(0),
-			wantErr: models.ErrAlreadyExists,
-			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(0), models.ErrAlreadyExists).
+				f.UsersStorage.On("GetFriendshipsByUserID", ctx, models.UserID(1)).
+					Return(&friendships, nil).
 					Once()
 			},
 		},
@@ -82,11 +71,11 @@ func Test_usecase_CreateUser(t *testing.T) {
 			}
 
 			// act
-			got, err := uc.CreateUser(tt.args.ctx, tt.args.user)
+			got, err := uc.GetFriendshipsByUserID(tt.args.ctx, tt.args.userID)
 
 			// assert
 			if err != nil && !errors.Is(err, tt.wantErr) {
-				t.Errorf("usecase.CreateUser() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("usecase.GetFriendshipsByUserID() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 

@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) AcceptFriendship(ctx context.Context, friendshipID models.FriendshipID) error {
-	err := uc.UsersStorage.UpdateFriendshipStatus(friendshipID, "accepted")
+	err := uc.UsersStorage.UpdateFriendshipStatus(ctx, friendshipID, "accepted")
 	if err != nil {
 		return err
 	}

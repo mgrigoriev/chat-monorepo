@@ -1,10 +1,16 @@
 package users_storage
 
-import "github.com/mgrigoriev/chat-monorepo/users/internal/models"
+import (
+	"context"
+	"github.com/mgrigoriev/chat-monorepo/users/internal/models"
+)
 
-func (r *UsersStorage) GetUserByLoginAndPassword(login string, password string) (*models.User, error) {
-	_ = login
-	_ = password
+func (r *UsersStorage) GetUserByLoginAndPassword(ctx context.Context, login string, password string) (*models.User, error) {
+	// TODO: Implement real logic
+
+	if login == "cool" && password == "hacker" {
+		return nil, models.ErrDoesNotExist
+	}
 
 	return &models.User{
 		ID:             3,

@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) Login(ctx context.Context, login string, password string) (models.AuthToken, error) {
-	_, err := uc.UsersStorage.GetUserByLoginAndPassword(login, password)
+	_, err := uc.UsersStorage.GetUserByLoginAndPassword(ctx, login, password)
 	if err != nil {
 		return "", err
 	}

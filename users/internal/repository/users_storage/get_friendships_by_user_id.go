@@ -1,9 +1,16 @@
 package users_storage
 
-import "github.com/mgrigoriev/chat-monorepo/users/internal/models"
+import (
+	"context"
+	"github.com/mgrigoriev/chat-monorepo/users/internal/models"
+)
 
-func (r *UsersStorage) GetFriendshipsByUserID(userID models.UserID) (*[]models.Friendship, error) {
-	_ = userID
+func (r *UsersStorage) GetFriendshipsByUserID(ctx context.Context, userID models.UserID) (*[]models.Friendship, error) {
+	// TODO: Implement real logic
+
+	if userID == 2000 {
+		return nil, models.ErrDoesNotExist
+	}
 
 	return &[]models.Friendship{
 		{

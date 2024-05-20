@@ -1,13 +1,15 @@
 package users_storage
 
 import (
-	"errors"
+	"context"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/models"
 )
 
-func (r *UsersStorage) GetUserByToken(token models.AuthToken) (*models.User, error) {
+func (r *UsersStorage) GetUserByToken(ctx context.Context, token models.AuthToken) (*models.User, error) {
+	// TODO: Implement real logic
+
 	if token != "valid-token" {
-		return nil, errors.New("invalid token")
+		return nil, models.ErrDoesNotExist
 	}
 
 	return &models.User{

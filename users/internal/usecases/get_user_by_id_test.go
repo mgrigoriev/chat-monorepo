@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_usecase_CreateUser(t *testing.T) {
+func Test_usecase_GetUserByID(t *testing.T) {
 	// prepare
 	var (
 		ctx = context.Background() // dummy
@@ -18,20 +18,21 @@ func Test_usecase_CreateUser(t *testing.T) {
 		UsersStorage *mocks.UsersStorage
 	}
 	type args struct {
-		ctx  context.Context
-		user models.User
+		ctx context.Context
+		id  models.UserID
 	}
+
 	var user = models.User{
+		ID:             1,
 		Name:           "Test User",
 		Email:          "test@test.com",
-		Password:       "qwerty",
 		AvatarPhotoURL: "https://test.com/test.jpg",
 	}
 
 	tests := []struct {
 		name    string
 		args    args
-		want    models.UserID
+		want    *models.User
 		wantErr error
 		on      func(*fields)
 		assert  func(*testing.T, *fields)
@@ -39,28 +40,28 @@ func Test_usecase_CreateUser(t *testing.T) {
 		{
 			name: "Test 1. Positive.",
 			args: args{
-				ctx:  ctx, // dummy
-				user: user,
+				ctx: ctx, // dummy
+				id:  models.UserID(1),
 			},
-			want:    models.UserID(1),
+			want:    &user,
 			wantErr: nil,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(1), nil).
+				f.UsersStorage.On("GetUserByID", ctx, models.UserID(1)).
+					Return(&user, nil).
 					Once()
 			},
 		},
 		{
 			name: "Test 2. Negative",
 			args: args{
-				ctx:  ctx, // dummy
-				user: user,
+				ctx: ctx, // dummy
+				id:  models.UserID(1),
 			},
-			want:    models.UserID(0),
-			wantErr: models.ErrAlreadyExists,
+			want:    nil,
+			wantErr: models.ErrDoesNotExist,
 			on: func(f *fields) {
-				f.UsersStorage.On("CreateUser", ctx, user).
-					Return(models.UserID(0), models.ErrAlreadyExists).
+				f.UsersStorage.On("GetUserByID", ctx, models.UserID(1)).
+					Return(nil, models.ErrDoesNotExist).
 					Once()
 			},
 		},
@@ -82,11 +83,11 @@ func Test_usecase_CreateUser(t *testing.T) {
 			}
 
 			// act
-			got, err := uc.CreateUser(tt.args.ctx, tt.args.user)
+			got, err := uc.GetUserByID(tt.args.ctx, tt.args.id)
 
 			// assert
 			if err != nil && !errors.Is(err, tt.wantErr) {
-				t.Errorf("usecase.CreateUser() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("usecase.GetUserByID() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 
