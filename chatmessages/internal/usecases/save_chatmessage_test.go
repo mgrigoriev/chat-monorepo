@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_usecase_CreateUser(t *testing.T) {
+func Test_usecase_SaveChatMessage(t *testing.T) {
 	// prepare
 	var (
 		ctx = context.Background() // dummy
@@ -88,7 +88,7 @@ func Test_usecase_CreateUser(t *testing.T) {
 
 			// assert
 			if err != nil && !errors.Is(err, tt.wantErr) {
-				t.Errorf("usecase.CreateChatMessage() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("usecase.SaveChatMessage() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 
