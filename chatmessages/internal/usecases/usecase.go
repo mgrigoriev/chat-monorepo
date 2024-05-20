@@ -11,10 +11,15 @@ type UsecaseInterface interface {
 	ListServerChatMessages(ctx context.Context, serverID models.ChatServerID) (*[]models.ChatMessage, error)
 }
 
-type ChatMessagesRepoInterface interface{}
+//go:generate mockery --name=ChatMessagesStorage --filename=chatmessages_storage_mock.go --disable-version-string
+type ChatMessagesStorage interface {
+	CreateChatMessage(ctx context.Context, chatMessage models.ChatMessage) (models.ChatMessageID, error)
+	GetPrivateChatMessages(ctx context.Context, userID models.UserID, otherUserID models.UserID) (*[]models.ChatMessage, error)
+	GetServerChatMessages(ctx context.Context, serverID models.ChatServerID) (*[]models.ChatMessage, error)
+}
 
 type Deps struct {
-	Repo ChatMessagesRepoInterface
+	ChatMessagesStorage
 }
 
 type Usecase struct {
@@ -25,12 +30,4 @@ func NewUsecase(d Deps) UsecaseInterface {
 	return &Usecase{
 		Deps: d,
 	}
-}
-
-func (uc *Usecase) SaveChatMessage(ctx context.Context, chatmessage models.ChatMessage) (models.ChatMessageID, error) {
-	// return 0, models.ErrNotImplemented
-
-	// TODO: Save to repo
-
-	return 1, nil
 }
