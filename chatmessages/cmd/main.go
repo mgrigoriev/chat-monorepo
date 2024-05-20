@@ -17,8 +17,8 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	repo := chatmessages_storage.New()
-	uc := usecases.NewUsecase(usecases.Deps{Repo: repo})
+	storage := chatmessages_storage.New()
+	uc := usecases.NewUsecase(usecases.Deps{ChatMessagesStorage: storage})
 
 	serverCfg := server.Config{GrpcPort: grpcPort, HttpPort: httpPort, SwaggerPort: swaggerPort}
 	serverDeps := server.Deps{Usecase: uc}

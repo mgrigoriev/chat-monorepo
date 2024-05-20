@@ -6,7 +6,10 @@ import (
 )
 
 func (uc *Usecase) DeleteFriendship(ctx context.Context, friendshipID models.FriendshipID) error {
-	//return models.ErrNotImplemented
-	// TODO: Call repo
+	err := uc.UsersStorage.DeleteFriendship(ctx, friendshipID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

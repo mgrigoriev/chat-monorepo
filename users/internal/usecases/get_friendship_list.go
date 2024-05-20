@@ -6,14 +6,10 @@ import (
 )
 
 func (uc *Usecase) GetFriendshipList(ctx context.Context, userID models.UserID) (*[]models.Friendship, error) {
-	//return nil, models.ErrNotImplemented
-	// TODO: Call repo
-	return &[]models.Friendship{
-		{
-			ID:         10,
-			FollowerID: 1,
-			FollowedID: 2,
-			Status:     "approved",
-		},
-	}, nil
+	friendships, err := uc.UsersStorage.GetFriendshipsByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return friendships, nil
 }

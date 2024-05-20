@@ -13,8 +13,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	repo := users_storage.New()
-	uc := usecases.NewUsecase(usecases.Deps{Repo: repo})
+	storage := users_storage.New()
+	uc := usecases.NewUsecase(usecases.Deps{UsersStorage: storage})
 
 	serverCfg := server.Config{Port: port}
 	serverDeps := server.Deps{Usecase: uc}

@@ -1,7 +1,7 @@
 package users_storage
 
-type Repo struct{}
+type UsersStorage struct{}
 
-func New() *Repo {
-	return &Repo{}
+func New() *UsersStorage {
+	return &UsersStorage{}
 }

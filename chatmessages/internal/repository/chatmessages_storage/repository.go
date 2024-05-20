@@ -1,7 +1,7 @@
 package chatmessages_storage
 
-type Repo struct{}
+type ChatmessagesStorage struct{}
 
-func New() *Repo {
-	return &Repo{}
+func New() *ChatmessagesStorage {
+	return &ChatmessagesStorage{}
 }
