@@ -5,7 +5,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
 )
 
-func (r *ChatmessagesStorage) GetPrivateChatMessages(ctx context.Context, userID models.UserID, otherUserID models.UserID) (*[]models.ChatMessage, error) {
+func (r *ChatMessagesStorage) GetPrivateChatMessages(ctx context.Context, userID models.UserID, otherUserID models.UserID) (*[]models.ChatMessage, error) {
 	// TODO: Implement real logic
 	_ = userID
 	_ = otherUserID

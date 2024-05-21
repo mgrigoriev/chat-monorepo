@@ -1,7 +1,14 @@
 package chatmessages_storage
 
-type ChatmessagesStorage struct{}
+import uc "github.com/mgrigoriev/chat-monorepo/chatmesages/internal/usecases"
 
-func New() *ChatmessagesStorage {
-	return &ChatmessagesStorage{}
+// Check that we implement contract for usecase
+var (
+	_ uc.ChatMessagesStorage = (*ChatMessagesStorage)(nil)
+)
+
+type ChatMessagesStorage struct{}
+
+func New() *ChatMessagesStorage {
+	return &ChatMessagesStorage{}
 }

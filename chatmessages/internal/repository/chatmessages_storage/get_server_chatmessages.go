@@ -5,7 +5,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
 )
 
-func (r *ChatmessagesStorage) GetServerChatMessages(ctx context.Context, serverID models.ChatServerID) (*[]models.ChatMessage, error) {
+func (r *ChatMessagesStorage) GetServerChatMessages(ctx context.Context, serverID models.ChatServerID) (*[]models.ChatMessage, error) {
 	// TODO: Implement real logic
 	_ = serverID
 
