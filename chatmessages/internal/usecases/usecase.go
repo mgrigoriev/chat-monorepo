@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"github.com/jackc/pgx/v5"
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
 )
 
@@ -18,8 +19,13 @@ type ChatMessagesStorage interface {
 	GetServerChatMessages(ctx context.Context, serverID models.ChatServerID) (*[]models.ChatMessage, error)
 }
 
+type TransactionManager interface {
+	RunReadCommitted(ctx context.Context, accessMode pgx.TxAccessMode, f func(ctx context.Context) error) error
+}
+
 type Deps struct {
 	ChatMessagesStorage
+	TransactionManager
 }
 
 type Usecase struct {

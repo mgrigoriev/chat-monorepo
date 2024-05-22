@@ -15,6 +15,9 @@ PKG_PROTO_PATH := $(CURDIR)/pkg
 # Путь до завендореных protobuf файлов
 VENDOR_PROTO_PATH := $(CURDIR)/vendor.protobuf
 
+# Путь до файлов миграций
+MIGRATION_DIR :=./migrations
+
 # устанавливаем необходимые плагины
 .bin-deps: export GOBIN := $(LOCAL_BIN)
 .bin-deps:
@@ -88,6 +91,22 @@ vendor:	.vendor-reset .vendor-googleapis .vendor-google-protobuf .vendor-protova
 	$(PROTOC) -I $(VENDOR_PROTO_PATH) --proto_path=$(CURDIR) \
 	--openapiv2_out=. --openapiv2_opt logtostderr=true \
 	$(PROTO_PATH)/chatmessages/service.proto
+
+.install-migrate: export GOBIN := $(LOCAL_BIN)
+.install-migrate:
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+create-migration: .install-migrate
+create-migration:
+	PATH=$(LOCAL_BIN) migrate create -ext sql -dir "${MIGRATION_DIR}" -seq migration
+
+DB_DSN:=postgresql://mikhail@0.0.0.0:5432/chatmessages?sslmode=disable
+
+migrate:
+	PATH=$(LOCAL_BIN) migrate -path ${MIGRATION_DIR} -database "${DB_DSN}" -verbose up
+
+migrate-rollback:
+	PATH=$(LOCAL_BIN) migrate -path ${MIGRATION_DIR} -database "${DB_DSN}" -verbose down
 
 # go mod tidy
 .tidy:
