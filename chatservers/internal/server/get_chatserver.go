@@ -9,13 +9,13 @@ import (
 )
 
 func (s *Server) getChatServer(c echo.Context) error {
-	userID, err := s.authenticate(c)
+	user, err := s.authenticate(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, s.httpErrorMsg(err))
 	}
 
 	// DEBUG
-	c.Logger().Debug("Authenticated User ID: ", userID)
+	c.Logger().Debug("Authenticated User ID: ", user.ID)
 
 	id := c.Param("id")
 	chatServerID, err := strconv.Atoi(id)
