@@ -21,9 +21,11 @@ func (r *ChatMessagesStorage) CreateChatMessage(ctx context.Context, chatMessage
 
 	query := squirrel.Insert(chatmessagesTable).
 		SetMap(row.ValuesMap()).
-		PlaceholderFormat(squirrel.Dollar)
+		PlaceholderFormat(squirrel.Dollar).
+		Suffix("RETURNING id")
 
-	if _, err := r.driver.GetQueryEngine(ctx).Execx(ctx, query); err != nil {
+	var id models.ChatMessageID
+	if err := r.driver.GetQueryEngine(ctx).Getx(ctx, &id, query); err != nil {
 		var pgError *pgconn.PgError
 		if errors.As(err, &pgError) && pgError.Code == pgerrcode.UniqueViolation {
 			return 0, pkgerrors.Wrap(api, models.ErrAlreadyExists)
@@ -31,7 +33,5 @@ func (r *ChatMessagesStorage) CreateChatMessage(ctx context.Context, chatMessage
 		return 0, pkgerrors.Wrap(api, err)
 	}
 
-	id := 123 // Hardcoded value
-
-	return models.ChatMessageID(id), nil
+	return id, nil
 }

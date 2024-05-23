@@ -15,9 +15,9 @@ const grpcPort = "9090"
 const httpPort = "8080"
 const swaggerPort = "8888"
 
-const DSN = "user=mikhail host=host.docker.internal port=5432 dbname=chatmessages pool_max_conns=10"
+// const DSN = "user=mikhail host=host.docker.internal port=5432 dbname=chatmessages pool_max_conns=10"
 
-// const DSN = "user=mikhail host=0.0.0.0 port=5432 dbname=chatmessages pool_max_conns=10"
+const DSN = "user=mikhail host=0.0.0.0 port=5432 dbname=chatmessages pool_max_conns=10"
 
 func main() {
 	ctx := context.Background()
