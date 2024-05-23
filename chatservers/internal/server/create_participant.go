@@ -25,7 +25,12 @@ func (s *Server) createParticipant(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, s.httpErrorMsg(err))
 	}
 
-	participantID, err := s.Usecase.CreateParticipant(c.Request().Context(), models.ChatServerID(chatServerID), models.UserID(*request.UserID))
+	participant := models.Participant{
+		ChatServerID: models.ChatServerID(chatServerID),
+		UserID:       models.UserID(*request.UserID),
+	}
+
+	participantID, err := s.Usecase.CreateParticipant(c.Request().Context(), participant)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, s.httpErrorMsg(err))
 	}

@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS chatservers (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    name VARCHAR(100) NOT NULL
+);

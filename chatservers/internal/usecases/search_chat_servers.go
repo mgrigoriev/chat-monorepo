@@ -6,18 +6,10 @@ import (
 )
 
 func (uc *Usecase) SearchChatServers(ctx context.Context, term string) (*[]models.ChatServer, error) {
-	// return nil, models.ErrNotImplemented
-	// TODO: Call repo
-	return &[]models.ChatServer{
-		{
-			ID:     1,
-			UserID: 2,
-			Name:   "Chatserver example 1",
-		},
-		{
-			ID:     2,
-			UserID: 3,
-			Name:   "Chatserver example 2",
-		},
-	}, nil
+	chatServers, err := uc.ChatServersStorage.GetChatServersByTerm(ctx, term)
+	if err != nil {
+		return nil, err
+	}
+
+	return chatServers, nil
 }

@@ -20,14 +20,17 @@ func (s *Server) createInvite(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, s.httpErrorMsg(err))
 	}
 
-	chatServerID, err := strconv.Atoi(c.Param("chatserver_id"))
+	chatServerID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, s.httpErrorMsg(err))
 	}
 
-	userID := models.UserID(*request.UserID)
+	invite := models.Invite{
+		ChatServerID: models.ChatServerID(chatServerID),
+		UserID:       models.UserID(*request.UserID),
+	}
 
-	inviteID, err := s.Usecase.CreateInvite(c.Request().Context(), models.ChatServerID(chatServerID), userID)
+	inviteID, err := s.Usecase.CreateInvite(c.Request().Context(), invite)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, s.httpErrorMsg(err))
 	}

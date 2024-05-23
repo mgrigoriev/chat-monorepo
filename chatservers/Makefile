@@ -1,5 +1,8 @@
 .PHONY: deploy
 
+LOCAL_BIN := $(CURDIR)/bin
+MIGRATION_DIR :=./migrations
+
 run:
 	cd ./cmd && go run .
 test:
@@ -22,3 +25,20 @@ d-sh:
 	docker run --rm -it chatservers sh
 d-log:
 	docker logs -f $(shell docker ps -qf "ancestor=chatservers")
+
+# Migrations
+.install-migrate: export GOBIN := $(LOCAL_BIN)
+.install-migrate:
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+create-migration: .install-migrate
+create-migration:
+	PATH=$(LOCAL_BIN) migrate create -ext sql -dir "${MIGRATION_DIR}" -seq migration
+
+DB_DSN:=postgresql://mikhail@0.0.0.0:5432/chatservers?sslmode=disable
+
+migrate:
+	PATH=$(LOCAL_BIN) migrate -path ${MIGRATION_DIR} -database "${DB_DSN}" -verbose up
+
+migrate-rollback:
+	PATH=$(LOCAL_BIN) migrate -path ${MIGRATION_DIR} -database "${DB_DSN}" -verbose down

@@ -6,11 +6,10 @@ import (
 )
 
 func (uc *Usecase) GetChatServerByID(ctx context.Context, id models.ChatServerID) (*models.ChatServer, error) {
-	//return nil, models.ErrNotImplemented
-	// TODO: Call repo
-	return &models.ChatServer{
-		ID:     1,
-		UserID: 2,
-		Name:   "Chatserver example",
-	}, nil
+	chatServer, err := uc.ChatServersStorage.GetChatServerByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return chatServer, nil
 }

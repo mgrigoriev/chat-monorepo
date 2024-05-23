@@ -6,7 +6,10 @@ import (
 )
 
 func (uc *Usecase) DeleteParticipant(ctx context.Context, participantID models.ParticipantID) error {
-	// return models.ErrNotImplemented
-	// TODO: Call repo
+	err := uc.ChatServersStorage.DeleteParticipant(ctx, participantID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
