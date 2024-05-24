@@ -148,21 +148,21 @@ func (_m *UsersStorage) GetUserByID(ctx context.Context, id models.UserID) (*mod
 	return r0, r1
 }
 
-// GetUserByLoginAndPassword provides a mock function with given fields: ctx, login, password
-func (_m *UsersStorage) GetUserByLoginAndPassword(ctx context.Context, login string, password string) (*models.User, error) {
-	ret := _m.Called(ctx, login, password)
+// GetUserByEmailAndPassword provides a mock function with given fields: ctx, email, password
+func (_m *UsersStorage) GetUserByEmailAndPassword(ctx context.Context, email string, password string) (*models.User, error) {
+	ret := _m.Called(ctx, email, password)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetUserByLoginAndPassword")
+		panic("no return value specified for GetUserByEmailAndPassword")
 	}
 
 	var r0 *models.User
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok {
-		return rf(ctx, login, password)
+		return rf(ctx, email, password)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok {
-		r0 = rf(ctx, login, password)
+		r0 = rf(ctx, email, password)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.User)
@@ -170,7 +170,7 @@ func (_m *UsersStorage) GetUserByLoginAndPassword(ctx context.Context, login str
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, login, password)
+		r1 = rf(ctx, email, password)
 	} else {
 		r1 = ret.Error(1)
 	}

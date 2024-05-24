@@ -2,20 +2,31 @@ package users_storage
 
 import (
 	"context"
+	"github.com/Masterminds/squirrel"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/models"
+	pkgerrors "github.com/mgrigoriev/chat-monorepo/users/pkg/errors"
 )
 
 func (r *UsersStorage) GetUserByID(ctx context.Context, id models.UserID) (*models.User, error) {
-	// TODO: Implement real logic
+	const api = "users_storage.GetUserByID"
 
-	if id == 2000 {
-		return nil, models.ErrDoesNotExist
+	query := squirrel.Select("id", "name", "email", "avatar_photo_url").
+		From(usersTable).
+		Where(squirrel.Eq{"id": id}).
+		PlaceholderFormat(squirrel.Dollar)
+
+	var row userRow
+	err := r.driver.GetQueryEngine(ctx).Getx(ctx, &row, query)
+	if err != nil {
+		return nil, pkgerrors.Wrap(api, err)
 	}
 
-	return &models.User{
-		ID:             id,
-		Name:           "Test",
-		Email:          "test@test.com",
-		AvatarPhotoURL: "https://test.com/1.jpg",
-	}, nil
+	user := models.User{
+		ID:             models.UserID(row.ID),
+		Name:           row.Name,
+		Email:          row.Email,
+		AvatarPhotoURL: row.AvatarPhotoURL,
+	}
+
+	return &user, nil
 }

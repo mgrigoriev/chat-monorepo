@@ -6,7 +6,7 @@ import (
 )
 
 func (uc *Usecase) SearchUsers(ctx context.Context, term string) (*[]models.User, error) {
-	users, err := uc.UsersStorage.GetUsersByNameSubstring(ctx, term)
+	users, err := uc.UsersStorage.GetUsersByTerm(ctx, term)
 	if err != nil {
 		return nil, err
 	}

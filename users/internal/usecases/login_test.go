@@ -48,7 +48,7 @@ func Test_usecase_Login(t *testing.T) {
 			want:    models.AuthToken("valid-token"),
 			wantErr: nil,
 			on: func(f *fields) {
-				f.UsersStorage.On("GetUserByLoginAndPassword", ctx, "test@example.com", "correct-password").
+				f.UsersStorage.On("GetUserByEmailAndPassword", ctx, "test@example.com", "correct-password").
 					Return(&user, nil).
 					Once()
 			},
@@ -63,7 +63,7 @@ func Test_usecase_Login(t *testing.T) {
 			want:    models.AuthToken(""),
 			wantErr: models.ErrDoesNotExist,
 			on: func(f *fields) {
-				f.UsersStorage.On("GetUserByLoginAndPassword", ctx, "test@example.com", "wrong-password").
+				f.UsersStorage.On("GetUserByEmailAndPassword", ctx, "test@example.com", "wrong-password").
 					Return(nil, models.ErrDoesNotExist).
 					Once()
 			},

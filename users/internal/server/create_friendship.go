@@ -25,7 +25,12 @@ func (s *Server) createFriendship(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, s.httpErrorMsg(err))
 	}
 
-	friendshipID, err := s.Usecase.CreateFriendship(c.Request().Context(), models.UserID(followerID), models.UserID(*request.UserID))
+	friendship := models.Friendship{
+		FollowerID: models.UserID(followerID),
+		FollowedID: models.UserID(*request.UserID),
+	}
+
+	friendshipID, err := s.Usecase.CreateFriendship(c.Request().Context(), friendship)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, s.httpErrorMsg(err))
 	}
