@@ -2,6 +2,7 @@ package users_storage
 
 import (
 	"context"
+	"errors"
 	"github.com/Masterminds/squirrel"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/models"
 	pkgerrors "github.com/mgrigoriev/chat-monorepo/users/pkg/errors"
@@ -10,9 +11,15 @@ import (
 func (r *UsersStorage) GetUserByToken(ctx context.Context, token models.AuthToken) (*models.User, error) {
 	const api = "users_storage.GetUserByToken"
 
+	// Hardcoded token for now
+	if token != "valid-token" {
+		return nil, pkgerrors.Wrap(api, errors.New("invalid token"))
+	}
+
+	// Hardcode user ID
 	query := squirrel.Select("id", "name", "email", "avatar_photo_url").
 		From(usersTable).
-		Where(squirrel.Eq{"token": token}).
+		Where(squirrel.Eq{"id": 2}).
 		PlaceholderFormat(squirrel.Dollar)
 
 	var row userRow
