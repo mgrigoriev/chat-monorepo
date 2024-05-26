@@ -2,14 +2,25 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/labstack/echo/v4"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/models"
 	serverModels "github.com/mgrigoriev/chat-monorepo/users/internal/server/models"
+	"math/rand"
 	"net/http"
 )
 
 func (s *Server) auth(c echo.Context) error {
+	c.Logger().Debug("Authenticating user")
+
+	// Emulate failure to check retry logic
+	randNum := rand.Intn(100) + 1
+	c.Logger().Debug(randNum)
+	if randNum%2 != 0 {
+		return c.JSON(http.StatusInternalServerError, s.httpErrorMsg(errors.New("random error")))
+	}
+
 	var request serverModels.AuthUserRequest
 
 	if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
