@@ -48,17 +48,22 @@ func (s *Server) setRoutes() {
 		return c.HTML(http.StatusOK, "Users Service")
 	})
 
-	s.echo.GET("/health", s.health)
+	limiter1 := middleware.NewRateLimiterMemoryStore(1)   // 1 request / sec
+	limiter10 := middleware.NewRateLimiterMemoryStore(10) // 10 requests / sec
+
+	// Test rate limiter for the method (bash):
+	//   for i in `seq 1 100`; do curl --location 'localhost:8080/health'; done
+	s.echo.GET("/health", s.health, middleware.RateLimiter(limiter10))
+
+	// Test rate limiter for the method (bash):
+	// 	 for i in `seq 1 100`; do curl --location 'localhost:8080/api/v1/users/1'; done
+	s.echo.GET("/api/v1/users/:id", s.getUser, middleware.RateLimiter(limiter1))
 
 	s.echo.POST("/api/v1/users", s.createUser)
-	s.echo.GET("/api/v1/users/:id", s.getUser)
 	s.echo.PUT("/api/v1/users/:id", s.updateUser)
-
 	s.echo.POST("/api/v1/users/login", s.login)
 	s.echo.POST("/api/v1/users/auth", s.auth)
-
 	s.echo.GET("/api/v1/users/search", s.searchUsers)
-
 	s.echo.POST("/api/v1/users/:id/friendships", s.createFriendship)
 	s.echo.GET("/api/v1/users/:id/friendships", s.getFriendshipList)
 	s.echo.PUT("/api/v1/users/:id/friendships/:friendship_id/accept", s.acceptFriendship)
