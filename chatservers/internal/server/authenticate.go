@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/mgrigoriev/goauth/authclient"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -25,9 +24,8 @@ func (s *Server) authenticate(c echo.Context) (user *authclient.CurrentUser, err
 		return nil, fmt.Errorf("invalid token")
 	}
 
-	httpClient := &http.Client{Timeout: authTimeout}
-	cfg := authclient.Config{AuthURL: authURL}
-	client := authclient.New(cfg, httpClient) // TODO: Инициализировать при создании сервера, а не при каждом запросе
+	cfg := authclient.Config{AuthURL: authURL, Timeout: authTimeout}
+	client := authclient.New(cfg) // TODO: Инициализировать при создании сервера, а не при каждом запросе
 
 	return client.Authenticate(authToken[1])
 }
