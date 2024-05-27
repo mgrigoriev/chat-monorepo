@@ -59,6 +59,12 @@ func (s *Server) setRoutes() {
 }
 
 func (s *Server) Start() {
+	defer func() {
+		if r := recover(); r != nil {
+			s.echo.Logger.Printf("Server recovered from panic: %v", r)
+		}
+	}()
+
 	s.echo.Logger.Fatal(s.echo.Start(":" + s.cfg.Port))
 }
 
