@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var idSerial uint64
@@ -43,14 +44,31 @@ type Server struct {
 	serverChatMessages  map[uint64]*pb.ChatMessageInfo
 	privateChatMessages map[uint64]*pb.ChatMessageInfo
 	validator           *protovalidate.Validator
+	grpcServer          *grpc.Server
+	mux                 *runtime.ServeMux
+	httpServer          *http.Server
+	swaggerServer       *echo.Echo
 	cfg                 Config
 	Deps
 }
 
-func NewServer(ctx context.Context, cfg Config, d Deps) (*Server, error) {
+func NewServer(cfg Config, d Deps) (*Server, error) {
+	corsOptions := cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+	}
+	corsHandler := cors.New(corsOptions).Handler
+
+	mux := runtime.NewServeMux()
+
 	srv := &Server{
 		serverChatMessages:  make(map[uint64]*pb.ChatMessageInfo),
 		privateChatMessages: make(map[uint64]*pb.ChatMessageInfo),
+		grpcServer:          grpc.NewServer(),
+		mux:                 mux,
+		httpServer:          &http.Server{Handler: corsHandler(mux)},
+		swaggerServer:       echo.New(),
 		Deps:                d,
 		cfg:                 cfg,
 	}
@@ -71,86 +89,144 @@ func NewServer(ctx context.Context, cfg Config, d Deps) (*Server, error) {
 	return srv, nil
 }
 
-func (server *Server) Start(ctx context.Context) {
+func (s *Server) Start(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		grpcServer := grpc.NewServer()
-		pb.RegisterChatMessagesServiceServer(grpcServer, server)
-
-		reflection.Register(grpcServer)
-
-		lis, err := net.Listen("tcp", ":"+server.cfg.GrpcPort)
-		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
-		}
-
-		log.Printf("server listening at %v", lis.Addr())
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-
-		// SaveChatMessage:
-		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":1, "recipient_id":10, "content":"hello - private message"}}'
-		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":2, "recipient_id":1, "content":"hello - server message"}}'
-		// ListServerChatMessages:
-		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/ListServerChatMessages '{"server_id":1}'
-		// ListPrivateChatMessages:
-		// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/ListPrivateChatMessages '{"user_id":1, "other_user_id":10}'
+		s.startGRPCServer(ctx)
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		corsOptions := cors.Options{
-			AllowedOrigins: []string{"*"},
-			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders: []string{"*"},
-		}
-		corsHandler := cors.New(corsOptions).Handler
-
-		// Register gRPC server endpoint
-		// Note: Make sure the gRPC server is running properly and accessible
-		mux := runtime.NewServeMux()
-		if err := pb.RegisterChatMessagesServiceHandlerServer(ctx, mux, server); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-
-		httpServer := &http.Server{Handler: corsHandler(mux)}
-
-		lis, err := net.Listen("tcp", ":"+server.cfg.HttpPort)
-		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
-		}
-
-		// Start HTTP server (and proxy calls to gRPC server endpoint)
-		log.Printf("server listening at %v", lis.Addr())
-		if err := httpServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-
-		// SaveChatMessage:
-		// curl --location 'localhost:8080/api/v1/chatmessages' --header 'Content-Type: application/json' --data '{"user_id":1, "user_name":"john", "recipient_type":1, "recipient_id":10, "content":"hello - private message"}'
-		// curl --location 'localhost:8080/api/v1/chatmessages' --header 'Content-Type: application/json' --data '{"user_id":1, "user_name":"john", "recipient_type":2, "recipient_id":1, "content":"hello - server message"}'
-		// ListServerChatMessages:
-		// curl --location 'localhost:8080/api/v1/chatmessages/server?server_id=1'
-		// ListPrivateChatMessages:
-		// curl --location 'localhost:8080/api/v1/chatmessages/private?user_id=1&other_user_id=10'
+		s.startHTTPGatewayServer(ctx)
 	}()
 
 	wg.Add(1)
 	go func() {
-		e := echo.New()
-		e.Use(middleware.Logger())
-		e.Static("/sw", "./swaggerui")
+		defer wg.Done()
+		s.startSwaggerServer(ctx)
+	}()
 
-		e.Logger.Fatal(e.Start(":" + server.cfg.SwaggerPort))
+	go func() {
+		// Wait until we receive a shutdown signal
+		<-ctx.Done()
+		s.gracefulShutdown()
 	}()
 
 	wg.Wait()
+}
+
+func (s *Server) startGRPCServer(ctx context.Context) {
+	pb.RegisterChatMessagesServiceServer(s.grpcServer, s)
+
+	reflection.Register(s.grpcServer)
+
+	lis, err := net.Listen("tcp", ":"+s.cfg.GrpcPort)
+	if err != nil {
+		log.Fatalf("grpc server: failed to listen: %v", err)
+	}
+
+	log.Printf("grpc server: server listening at %v", lis.Addr())
+	if err := s.grpcServer.Serve(lis); err != nil {
+		log.Printf("grpc server: failed to serve: %v", err)
+	}
+
+	// SaveChatMessage:
+	// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":1, "recipient_id":10, "content":"hello - private message"}}'
+	// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/SaveChatMessage '{"info":{"user_id":1, "user_name":"john", "recipient_type":2, "recipient_id":1, "content":"hello - server message"}}'
+	// ListServerChatMessages:
+	// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/ListServerChatMessages '{"server_id":1}'
+	// ListPrivateChatMessages:
+	// grpc_cli call --json_input --json_output localhost:9090 ChatMessagesService/ListPrivateChatMessages '{"user_id":1, "other_user_id":10}'
+}
+
+func (s *Server) startHTTPGatewayServer(ctx context.Context) {
+	if err := pb.RegisterChatMessagesServiceHandlerServer(ctx, s.mux, s); err != nil {
+		log.Fatalf("http gateway: failed to serve: %v", err)
+	}
+
+	lis, err := net.Listen("tcp", ":"+s.cfg.HttpPort)
+	if err != nil {
+		log.Fatalf("http gateway: failed to listen: %v", err)
+	}
+
+	// Start HTTP server (and proxy calls to gRPC server endpoint)
+	log.Printf("http gateway: server listening at %v", lis.Addr())
+	if err := s.httpServer.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Printf("http gateway: failed to serve: %v", err)
+	}
+
+	// SaveChatMessage:
+	// curl --location 'localhost:8080/api/v1/chatmessages' --header 'Content-Type: application/json' --data '{"user_id":1, "user_name":"john", "recipient_type":1, "recipient_id":10, "content":"hello - private message"}'
+	// curl --location 'localhost:8080/api/v1/chatmessages' --header 'Content-Type: application/json' --data '{"user_id":1, "user_name":"john", "recipient_type":2, "recipient_id":1, "content":"hello - server message"}'
+	// ListServerChatMessages:
+	// curl --location 'localhost:8080/api/v1/chatmessages/server?server_id=1'
+	// ListPrivateChatMessages:
+	// curl --location 'localhost:8080/api/v1/chatmessages/private?user_id=1&other_user_id=10'
+}
+
+func (s *Server) startSwaggerServer(ctx context.Context) {
+	s.swaggerServer.Use(middleware.Logger())
+	s.swaggerServer.Static("/sw", "./swaggerui")
+
+	if err := s.swaggerServer.Start(":" + s.cfg.SwaggerPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Printf("swagger server: failed to serve: %v", err)
+	}
+}
+
+func (s *Server) gracefulShutdown() {
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Printf("swagger server: shutting down server gracefully")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.swaggerServer.Shutdown(ctx); err != nil {
+			s.swaggerServer.Close()
+			log.Printf("swagger server: shut down error: %v", err)
+		} else {
+			log.Print("swagger server: shut down")
+		}
+	}()
+
+	wg.Wait() // Ensure Swagger server is shutdown first
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		log.Print("http gateway: shutting down server gracefully")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			s.httpServer.Close()
+			log.Printf("http gateway: shut down error: %v", err)
+		} else {
+			log.Print("http gateway: shut down")
+		}
+	}()
+
+	wg.Wait() // Ensure HTTP Gateway server is shutdown second
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		log.Print("grpc server: shutting down server gracefully")
+		s.grpcServer.GracefulStop()
+		log.Print("grpc server: shut down")
+	}()
+
+	wg.Wait() // Ensure gRPC server is shutdown last
 }
 
 func protovalidateViolationsToGoogleViolations(vs []*validate.Violation) []*errdetails.BadRequest_FieldViolation {

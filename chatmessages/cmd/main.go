@@ -10,6 +10,8 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/transaction_manager"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -18,9 +20,11 @@ const httpPort = "8080"
 const swaggerPort = "8888"
 
 func main() {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
 
 	// repository
 	dbHost := os.Getenv("DB_HOST")
@@ -56,7 +60,7 @@ func main() {
 
 	serverCfg := server.Config{GrpcPort: grpcPort, HttpPort: httpPort, SwaggerPort: swaggerPort}
 	serverDeps := server.Deps{Usecase: uc}
-	srv, err := server.NewServer(ctx, serverCfg, serverDeps)
+	srv, err := server.NewServer(serverCfg, serverDeps)
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}
