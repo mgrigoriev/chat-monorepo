@@ -2,12 +2,15 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/server/models"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/usecases"
 	"net/http"
+	"time"
 )
 
 type Config struct {
@@ -24,7 +27,7 @@ type Server struct {
 	Deps
 }
 
-func New(ctx context.Context, cfg Config, d Deps) *Server {
+func New(cfg Config, d Deps) *Server {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -71,8 +74,30 @@ func (s *Server) setRoutes() {
 	s.echo.DELETE("/api/v1/users/:id/friendships/:friendship_id", s.deleteFriendship)
 }
 
-func (s *Server) Start() {
-	s.echo.Logger.Fatal(s.echo.Start(":" + s.cfg.Port))
+func (s *Server) Start(ctx context.Context) error {
+	go func() {
+		if err := s.echo.Start(":" + s.cfg.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("server: %v", err)
+		}
+	}()
+
+	// Wait until we receive a shutdown signal
+	<-ctx.Done()
+
+	log.Print("server: shutting down server gracefully")
+
+	// Create a context with a 20-second timeout
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	// Attempt a graceful shutdown
+	if err := s.echo.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("server: shutdown: %w", err)
+	}
+
+	log.Print("server: shutdown")
+
+	return nil
 }
 
 func (s *Server) httpErrorMsg(err error) *models.ErrorMessage {

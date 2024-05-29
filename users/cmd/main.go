@@ -10,14 +10,19 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/transaction_manager"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
 const port = "8080"
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
 
 	// repository
 	dbHost := os.Getenv("DB_HOST")
@@ -49,6 +54,8 @@ func main() {
 	serverCfg := server.Config{Port: port}
 	serverDeps := server.Deps{Usecase: uc}
 
-	s := server.New(ctx, serverCfg, serverDeps)
-	s.Start()
+	s := server.New(serverCfg, serverDeps)
+	if err := s.Start(ctx); err != nil {
+		log.Fatal(err)
+	}
 }
