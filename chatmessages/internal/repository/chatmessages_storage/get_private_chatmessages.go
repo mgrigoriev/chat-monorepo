@@ -10,7 +10,14 @@ import (
 func (r *ChatMessagesStorage) GetPrivateChatMessages(ctx context.Context, userID models.UserID, otherUserID models.UserID) (*[]models.ChatMessage, error) {
 	const api = "chatmessages_storage.GetPrivateChatMessages"
 
-	query := squirrel.Select("*").
+	query := squirrel.Select(
+		"id",
+		"user_id",
+		"user_name",
+		"recipient_type",
+		"recipient_id",
+		"content",
+	).
 		From("chatmessages").
 		Where(squirrel.Or{
 			squirrel.Eq{"user_id": userID, "recipient_id": otherUserID},

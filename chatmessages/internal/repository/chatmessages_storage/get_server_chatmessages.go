@@ -10,7 +10,14 @@ import (
 func (r *ChatMessagesStorage) GetServerChatMessages(ctx context.Context, serverID models.ChatServerID) (*[]models.ChatMessage, error) {
 	const api = "chatmessages_storage.GetPrivateChatMessages"
 
-	query := squirrel.Select("*").
+	query := squirrel.Select(
+		"id",
+		"user_id",
+		"user_name",
+		"recipient_type",
+		"recipient_id",
+		"content",
+	).
 		From("chatmessages").
 		Where(squirrel.Eq{"recipient_type": 2, "recipient_id": serverID}).
 		PlaceholderFormat(squirrel.Dollar)
