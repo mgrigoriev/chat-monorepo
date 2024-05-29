@@ -3,8 +3,8 @@ package chatmessages_storage
 import (
 	"context"
 	"github.com/Masterminds/squirrel"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
-	pkgerrors "github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/errors"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
+	pkgerrors "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/errors"
 )
 
 func (r *ChatMessagesStorage) GetPrivateChatMessages(ctx context.Context, userID models.UserID, otherUserID models.UserID) (*[]models.ChatMessage, error) {

@@ -1,7 +1,7 @@
 package chatmessages_storage
 
 import (
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
 )
 
 type chatMessageRow struct {

@@ -7,8 +7,8 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
-	pkgerrors "github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/errors"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
+	pkgerrors "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/errors"
 )
 
 func (r *ChatMessagesStorage) CreateChatMessage(ctx context.Context, chatMessage models.ChatMessage) (models.ChatMessageID, error) {

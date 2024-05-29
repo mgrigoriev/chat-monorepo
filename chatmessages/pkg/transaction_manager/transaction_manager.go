@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/postgres"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/postgres"
 )
 
 // TransactionManager - менеджер транзакций: позовляет выполнять функции разных репозиториев ходящих в одну БД в рамках транзакции

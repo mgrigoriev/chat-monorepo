@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"context"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
 )
 
 func (uc *Usecase) ListPrivateChatMessages(ctx context.Context, userID models.UserID, otherUserID models.UserID) (*[]models.ChatMessage, error) {

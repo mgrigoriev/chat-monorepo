@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
-	pb "github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/api/chatmessages"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
+	pb "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages"
 	"log"
 )
 

@@ -3,9 +3,9 @@ package chatmessages_storage
 import (
 	"context"
 	"github.com/jackc/pgx/v5/pgconn"
-	uc "github.com/mgrigoriev/chat-monorepo/chatmesages/internal/usecases"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/postgres"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/transaction_manager"
+	uc "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/postgres"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/transaction_manager"
 )
 
 const (

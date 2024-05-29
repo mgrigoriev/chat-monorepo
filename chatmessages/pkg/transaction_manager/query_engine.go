@@ -5,7 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/postgres"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/postgres"
 )
 
 // QueryEngineProvider - smths that gives us QueryEngine

@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"context"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
 )
 
 func (uc *Usecase) SaveChatMessage(ctx context.Context, chatMessage models.ChatMessage) (models.ChatMessageID, error) {

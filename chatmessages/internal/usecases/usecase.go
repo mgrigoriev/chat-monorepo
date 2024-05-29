@@ -3,7 +3,7 @@ package usecases
 import (
 	"context"
 	"github.com/jackc/pgx/v5"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
 )
 
 type UsecaseInterface interface {

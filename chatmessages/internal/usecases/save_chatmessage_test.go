@@ -3,8 +3,8 @@ package usecases
 import (
 	"context"
 	"errors"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
-	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/usecases/mocks"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

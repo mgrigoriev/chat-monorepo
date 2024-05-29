@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	models "github.com/mgrigoriev/chat-monorepo/chatmesages/internal/models"
+	models "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/models"
 	mock "github.com/stretchr/testify/mock"
 )
 
