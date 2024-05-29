@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/repository/chatmessages_storage"
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/server"
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/internal/usecases"
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/postgres"
 	"github.com/mgrigoriev/chat-monorepo/chatmesages/pkg/transaction_manager"
 	"log"
+	"os"
 	"time"
 )
 
@@ -15,16 +17,19 @@ const grpcPort = "9090"
 const httpPort = "8080"
 const swaggerPort = "8888"
 
-// const DSN = "user=mikhail host=host.docker.internal port=5432 dbname=chatmessages pool_max_conns=10"
-
-const DSN = "user=mikhail host=0.0.0.0 port=5432 dbname=chatmessages pool_max_conns=10"
-
 func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	// repository
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = "0.0.0.0"
+	}
+
+	DSN := fmt.Sprintf("user=mikhail host=%s port=5432 dbname=chatmessages pool_max_conns=10", dbHost)
+
 	pool, err := postgres.NewConnectionPool(ctx, DSN,
 		postgres.WithMaxConnIdleTime(5*time.Minute),
 		postgres.WithMaxConnLifeTime(time.Hour),
