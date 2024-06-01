@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/server/models"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/usecases"
+	"github.com/mgrigoriev/chat-monorepo/users/pkg/logger"
 	"net/http"
 	"time"
 )
@@ -30,8 +31,30 @@ type Server struct {
 func New(cfg Config, d Deps) *Server {
 	e := echo.New()
 
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:      true,
+		LogStatus:   true,
+		LogMethod:   true,
+		LogRemoteIP: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			logFields := []interface{}{
+				"URI", v.URI,
+				"status", v.Status,
+				"method", v.Method,
+				"remote_ip", c.Request().RemoteAddr,
+			}
+
+			if v.Status >= 500 {
+				logger.ErrorKV(c.Request().Context(), "Server Error", logFields...)
+			} else {
+				logger.InfoKV(c.Request().Context(), "Request", logFields...)
+			}
+
+			return nil
+		},
+	}))
 
 	e.Logger.SetLevel(log.DEBUG)
 
@@ -77,14 +100,14 @@ func (s *Server) setRoutes() {
 func (s *Server) Start(ctx context.Context) error {
 	go func() {
 		if err := s.echo.Start(":" + s.cfg.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("server: %v", err)
+			logger.Errorf(ctx, "server: %v", err)
 		}
 	}()
 
 	// Wait until we receive a shutdown signal
 	<-ctx.Done()
 
-	log.Print("server: shutting down server gracefully")
+	logger.Info(ctx, "server: shutting down server gracefully")
 
 	// Create a context with a 20-second timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -95,7 +118,7 @@ func (s *Server) Start(ctx context.Context) error {
 		return fmt.Errorf("server: shutdown: %w", err)
 	}
 
-	log.Print("server: shutdown")
+	logger.Info(ctx, "server: shutdown")
 
 	return nil
 }
