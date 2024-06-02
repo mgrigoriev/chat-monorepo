@@ -8,6 +8,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/users/internal/usecases"
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/logger"
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/postgres"
+	jaeger_tracing "github.com/mgrigoriev/chat-monorepo/users/pkg/tracing"
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/transaction_manager"
 	"go.uber.org/zap/zapcore"
 	"os"
@@ -27,6 +28,10 @@ func main() {
 
 	logger.SetLevel(zapcore.DebugLevel)
 	logger.Info(ctx, "start app init")
+
+	if err := jaeger_tracing.Init("users-service"); err != nil {
+		logger.Fatal(ctx, err)
+	}
 
 	// repository
 	dbHost := os.Getenv("DB_HOST")

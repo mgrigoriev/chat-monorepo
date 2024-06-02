@@ -7,9 +7,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	mw "github.com/mgrigoriev/chat-monorepo/users/internal/server/middleware"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/server/models"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/usecases"
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/logger"
+	"github.com/opentracing/opentracing-go"
 	"net/http"
 	"time"
 )
@@ -33,30 +35,10 @@ func New(cfg Config, d Deps) *Server {
 
 	e.Use(middleware.Recover())
 
-	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogURI:      true,
-		LogStatus:   true,
-		LogMethod:   true,
-		LogRemoteIP: true,
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			logFields := []interface{}{
-				"URI", v.URI,
-				"status", v.Status,
-				"method", v.Method,
-				"remote_ip", c.Request().RemoteAddr,
-			}
-
-			if v.Status >= 500 {
-				logger.ErrorKV(c.Request().Context(), "Server Error", logFields...)
-			} else {
-				logger.InfoKV(c.Request().Context(), "Request", logFields...)
-			}
-
-			return nil
-		},
-	}))
-
+	e.Use(mw.Logging())
 	e.Logger.SetLevel(log.DEBUG)
+
+	e.Use(mw.JaegerTracing(opentracing.GlobalTracer()))
 
 	s := &Server{
 		echo: e,
