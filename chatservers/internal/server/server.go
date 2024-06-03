@@ -40,8 +40,6 @@ func New(cfg Config, d Deps) (*Server, io.Closer) {
 	e.Use(mw.Logging())
 	e.Logger.SetLevel(log.DEBUG)
 
-	//e.Use(mw.JaegerTracing(opentracing.GlobalTracer()))
-
 	server := &Server{
 		echo: e,
 		cfg:  cfg,
