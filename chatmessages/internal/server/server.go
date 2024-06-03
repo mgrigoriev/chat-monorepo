@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases"
 	pb "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/logger"
 	"github.com/rs/cors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -27,9 +28,11 @@ import (
 var idSerial uint64
 
 type Config struct {
-	GrpcPort    string
-	HttpPort    string
-	SwaggerPort string
+	GrpcPort               string
+	HttpPort               string
+	SwaggerPort            string
+	ChainUnaryInterceptors []grpc.UnaryServerInterceptor
+	UnaryInterceptors      []grpc.UnaryServerInterceptor
 }
 
 type Deps struct {
@@ -113,7 +116,7 @@ func (s *Server) Start(ctx context.Context) {
 	go func() {
 		// Wait until we receive a shutdown signal
 		<-ctx.Done()
-		s.gracefulShutdown()
+		s.gracefulShutdown(ctx)
 	}()
 
 	wg.Wait()
@@ -126,12 +129,12 @@ func (s *Server) startGRPCServer(ctx context.Context) {
 
 	lis, err := net.Listen("tcp", ":"+s.cfg.GrpcPort)
 	if err != nil {
-		log.Fatalf("grpc server: failed to listen: %v", err)
+		logger.Fatalf(ctx, "grpc server: failed to listen: %v", err)
 	}
 
-	log.Printf("grpc server: server listening at %v", lis.Addr())
+	logger.Infof(ctx, "grpc server: server listening at %v", lis.Addr())
 	if err := s.grpcServer.Serve(lis); err != nil {
-		log.Printf("grpc server: failed to serve: %v", err)
+		logger.Infof(ctx, "grpc server: failed to serve: %v", err)
 	}
 
 	// SaveChatMessage:
@@ -145,18 +148,18 @@ func (s *Server) startGRPCServer(ctx context.Context) {
 
 func (s *Server) startHTTPGatewayServer(ctx context.Context) {
 	if err := pb.RegisterChatMessagesServiceHandlerServer(ctx, s.mux, s); err != nil {
-		log.Fatalf("http gateway: failed to serve: %v", err)
+		logger.Fatalf(ctx, "http gateway: failed to serve: %v", err)
 	}
 
 	lis, err := net.Listen("tcp", ":"+s.cfg.HttpPort)
 	if err != nil {
-		log.Fatalf("http gateway: failed to listen: %v", err)
+		logger.Fatalf(ctx, "http gateway: failed to listen: %v", err)
 	}
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	log.Printf("http gateway: server listening at %v", lis.Addr())
+	logger.Infof(ctx, "http gateway: server listening at %v", lis.Addr())
 	if err := s.httpServer.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Printf("http gateway: failed to serve: %v", err)
+		logger.Infof(ctx, "http gateway: failed to serve: %v", err)
 	}
 
 	// SaveChatMessage:
@@ -173,24 +176,24 @@ func (s *Server) startSwaggerServer(ctx context.Context) {
 	s.swaggerServer.Static("/sw", "./swaggerui")
 
 	if err := s.swaggerServer.Start(":" + s.cfg.SwaggerPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Printf("swagger server: failed to serve: %v", err)
+		logger.Infof(ctx, "swagger server: failed to serve: %v", err)
 	}
 }
 
-func (s *Server) gracefulShutdown() {
+func (s *Server) gracefulShutdown(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		log.Printf("swagger server: shutting down server gracefully")
+		logger.Infof(ctx, "swagger server: shutting down server gracefully")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		if err := s.swaggerServer.Shutdown(ctx); err != nil {
 			s.swaggerServer.Close()
-			log.Printf("swagger server: shut down error: %v", err)
+			logger.Infof(ctx, "swagger server: shut down error: %v", err)
 		} else {
 			log.Print("swagger server: shut down")
 		}
@@ -209,7 +212,7 @@ func (s *Server) gracefulShutdown() {
 
 		if err := s.httpServer.Shutdown(ctx); err != nil {
 			s.httpServer.Close()
-			log.Printf("http gateway: shut down error: %v", err)
+			logger.Infof(ctx, "http gateway: shut down error: %v", err)
 		} else {
 			log.Print("http gateway: shut down")
 		}

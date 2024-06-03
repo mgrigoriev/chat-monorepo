@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/mgrigoriev/chat-monorepo/chatservers/pkg/logger"
 	"github.com/mgrigoriev/goauth/authclient"
 	"strings"
 	"time"
@@ -25,7 +26,7 @@ func (s *Server) authenticate(c echo.Context) (user *authclient.CurrentUser, err
 	}
 
 	cfg := authclient.Config{AuthURL: authURL, Timeout: authTimeout}
-	client := authclient.New(cfg) // TODO: Инициализировать при создании сервера, а не при каждом запросе
+	client := authclient.New(cfg, logger.Logger()) // TODO: Инициализировать при создании сервера, а не при каждом запросе
 
-	return client.Authenticate(authToken[1])
+	return client.Authenticate(c.Request().Context(), authToken[1])
 }

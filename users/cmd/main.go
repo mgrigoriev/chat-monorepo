@@ -6,9 +6,10 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/users/internal/repository/users_storage"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/server"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/usecases"
+	"github.com/mgrigoriev/chat-monorepo/users/pkg/logger"
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/postgres"
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/transaction_manager"
-	"log"
+	"go.uber.org/zap/zapcore"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,6 +24,9 @@ func main() {
 		syscall.SIGTERM,
 	)
 	defer stop()
+
+	logger.SetLevel(zapcore.DebugLevel)
+	logger.Info(ctx, "start app init")
 
 	// repository
 	dbHost := os.Getenv("DB_HOST")
@@ -39,7 +43,7 @@ func main() {
 		postgres.WithMinConnectionsCount(5),
 	)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(ctx, err)
 	}
 
 	txManager := transaction_manager.New(pool)
@@ -54,8 +58,10 @@ func main() {
 	serverCfg := server.Config{Port: port}
 	serverDeps := server.Deps{Usecase: uc}
 
-	s := server.New(serverCfg, serverDeps)
+	s, c := server.New(serverCfg, serverDeps)
+	defer c.Close()
+
 	if err := s.Start(ctx); err != nil {
-		log.Fatal(err)
+		logger.Fatal(ctx, err)
 	}
 }
