@@ -1,9 +1,16 @@
+x-common-variables: &common-variables
+  DB_HOST: "host.docker.internal"
+  JAEGER_HOST: "jaeger:6831"
+  JAEGER_AGENT_HOST: jaeger
+  JAEGER_AGENT_PORT: 6831
+
 services:
   chatmessages:
     build: chatmessages/
     command: ./main
     environment:
-      DB_HOST: "host.docker.internal"
+      <<: *common-variables
+      JAEGER_SERVICE_NAME: "chatmessages"
     ports:
       - "8081:8080"  # REST API
       - "9091:9090"  # gRPC
@@ -12,17 +19,16 @@ services:
     build: chatservers/
     command: ./main
     environment:
-      DB_HOST: "host.docker.internal"
+      <<: *common-variables
+      JAEGER_SERVICE_NAME: "chatservers"
     ports:
       - "8082:8080"
   users:
     build: users/
     command: ./main
     environment:
-      DB_HOST: "host.docker.internal"
-      JAEGER_HOST: "jaeger:6831"
-      JAEGER_AGENT_HOST: jaeger
-      JAEGER_AGENT_PORT: 6831
+      <<: *common-variables
+      JAEGER_SERVICE_NAME: "users"
     ports:
       - "8083:8080"
   ###################

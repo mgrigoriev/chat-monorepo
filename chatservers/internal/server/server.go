@@ -4,11 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/labstack/echo-contrib/jaegertracing"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	mw "github.com/mgrigoriev/chat-monorepo/chatservers/internal/server/middleware"
 	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/server/models"
 	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/usecases"
+	"github.com/mgrigoriev/chat-monorepo/chatservers/pkg/logger"
+	"io"
 	"net/http"
 	"time"
 )
@@ -27,23 +31,26 @@ type Server struct {
 	Deps
 }
 
-func New(cfg Config, d Deps) *Server {
+func New(cfg Config, d Deps) (*Server, io.Closer) {
 	e := echo.New()
+	closer := jaegertracing.New(e, nil)
 
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	e.Use(mw.Logging())
 	e.Logger.SetLevel(log.DEBUG)
 
-	s := &Server{
+	//e.Use(mw.JaegerTracing(opentracing.GlobalTracer()))
+
+	server := &Server{
 		echo: e,
 		cfg:  cfg,
 		Deps: d,
 	}
 
-	s.setRoutes()
+	server.setRoutes()
 
-	return s
+	return server, closer
 }
 
 func (s *Server) setRoutes() {
@@ -70,14 +77,14 @@ func (s *Server) Start(ctx context.Context) error {
 
 	go func() {
 		if err := s.echo.Start(":" + s.cfg.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("server: %v", err)
+			logger.Errorf(ctx, "server: %v", err)
 		}
 	}()
 
 	// Wait until we receive a shutdown signal
 	<-ctx.Done()
 
-	log.Print("server: shutting down server gracefully")
+	logger.Info(ctx, "server: shutting down server gracefully")
 
 	// Create a context with a 20-second timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -88,7 +95,7 @@ func (s *Server) Start(ctx context.Context) error {
 		return fmt.Errorf("server: shutdown: %w", err)
 	}
 
-	log.Print("server: shutdown")
+	logger.Info(ctx, "server: shutdown")
 
 	return nil
 }

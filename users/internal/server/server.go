@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/labstack/echo-contrib/jaegertracing"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -11,7 +12,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/users/internal/server/models"
 	"github.com/mgrigoriev/chat-monorepo/users/internal/usecases"
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/logger"
-	"github.com/opentracing/opentracing-go"
+	"io"
 	"net/http"
 	"time"
 )
@@ -30,25 +31,26 @@ type Server struct {
 	Deps
 }
 
-func New(cfg Config, d Deps) *Server {
+func New(cfg Config, d Deps) (*Server, io.Closer) {
 	e := echo.New()
+	closer := jaegertracing.New(e, nil)
 
 	e.Use(middleware.Recover())
 
 	e.Use(mw.Logging())
 	e.Logger.SetLevel(log.DEBUG)
 
-	e.Use(mw.JaegerTracing(opentracing.GlobalTracer()))
+	//e.Use(mw.JaegerTracing(opentracing.GlobalTracer()))
 
-	s := &Server{
+	server := &Server{
 		echo: e,
 		cfg:  cfg,
 		Deps: d,
 	}
 
-	s.setRoutes()
+	server.setRoutes()
 
-	return s
+	return server, closer
 }
 
 func (s *Server) setRoutes() {
