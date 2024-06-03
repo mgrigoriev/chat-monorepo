@@ -3,12 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
+	grpc_opentracing "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/repository/chatmessages_storage"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server"
+	middleware_errors "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/errors"
+	middleware_logging "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/logging"
+	middleware_recovery "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/recovery"
+	middleware_tracing "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/tracing"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases"
+	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/logger"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/postgres"
+	jaeger_tracing "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/tracing"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/transaction_manager"
-	"log"
+	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap/zapcore"
+	"google.golang.org/grpc"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,6 +35,14 @@ func main() {
 	)
 	defer stop()
 
+	logger.SetLevel(zapcore.DebugLevel)
+
+	logger.Info(ctx, "start app init")
+	serviceName := os.Getenv("JAEGER_SERVICE_NAME")
+	if err := jaeger_tracing.Init(serviceName); err != nil {
+		logger.Fatal(ctx, err)
+	}
+
 	// repository
 	dbHost := os.Getenv("DB_HOST")
 	if dbHost == "" {
@@ -41,7 +58,7 @@ func main() {
 		postgres.WithMinConnectionsCount(5),
 	)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(ctx, err)
 	}
 
 	txManager := transaction_manager.New(pool)
@@ -58,11 +75,25 @@ func main() {
 		TransactionManager:  txManager,
 	})
 
-	serverCfg := server.Config{GrpcPort: grpcPort, HttpPort: httpPort, SwaggerPort: swaggerPort}
+	serverCfg := server.Config{
+		GrpcPort:    grpcPort,
+		HttpPort:    httpPort,
+		SwaggerPort: swaggerPort,
+		ChainUnaryInterceptors: []grpc.UnaryServerInterceptor{
+			// https://github.com/grpc-ecosystem/go-grpc-middleware?tab=readme-ov-file#middleware
+			grpc_opentracing.OpenTracingServerInterceptor(opentracing.GlobalTracer(), grpc_opentracing.LogPayloads()), // Order matters e.g. tracing interceptor have to create span first for the later exemplars to work.
+			middleware_logging.LogErrorUnaryInterceptor(),
+			middleware_tracing.DebugOpenTracingUnaryServerInterceptor(true, true), // расширение для grpc_opentracing.OpenTracingServerInterceptor
+			middleware_recovery.RecoverUnaryInterceptor(),
+		},
+		UnaryInterceptors: []grpc.UnaryServerInterceptor{
+			middleware_errors.ErrorsUnaryInterceptor(),
+		},
+	}
 	serverDeps := server.Deps{Usecase: uc}
 	srv, err := server.NewServer(serverCfg, serverDeps)
 	if err != nil {
-		log.Fatalf("failed to create server: %v", err)
+		logger.Fatalf(ctx, "failed to create server: %v", err)
 	}
 
 	srv.Start(ctx)
