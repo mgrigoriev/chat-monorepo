@@ -8,6 +8,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server"
 	middleware_errors "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/errors"
 	middleware_logging "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/logging"
+	middleware_metrics "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/metrics"
 	middleware_recovery "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/recovery"
 	middleware_tracing "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/tracing"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases"
@@ -26,7 +27,7 @@ import (
 
 const grpcPort = "9090"
 const httpPort = "8080"
-const swaggerPort = "8888"
+const internalServerPort = "8888"
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(),
@@ -76,14 +77,15 @@ func main() {
 	})
 
 	serverCfg := server.Config{
-		GrpcPort:    grpcPort,
-		HttpPort:    httpPort,
-		SwaggerPort: swaggerPort,
+		GrpcPort:           grpcPort,
+		HttpPort:           httpPort,
+		InternalServerPort: internalServerPort,
 		ChainUnaryInterceptors: []grpc.UnaryServerInterceptor{
 			// https://github.com/grpc-ecosystem/go-grpc-middleware?tab=readme-ov-file#middleware
 			grpc_opentracing.OpenTracingServerInterceptor(opentracing.GlobalTracer(), grpc_opentracing.LogPayloads()), // Order matters e.g. tracing interceptor have to create span first for the later exemplars to work.
 			middleware_logging.LogErrorUnaryInterceptor(),
 			middleware_tracing.DebugOpenTracingUnaryServerInterceptor(true, true), // расширение для grpc_opentracing.OpenTracingServerInterceptor
+			middleware_metrics.MetricsUnaryInterceptor(),
 			middleware_recovery.RecoverUnaryInterceptor(),
 		},
 		UnaryInterceptors: []grpc.UnaryServerInterceptor{

@@ -12,6 +12,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases"
 	pb "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -21,6 +22,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"sync"
 	"time"
 )
@@ -30,7 +32,7 @@ var idSerial uint64
 type Config struct {
 	GrpcPort               string
 	HttpPort               string
-	SwaggerPort            string
+	InternalServerPort     string
 	ChainUnaryInterceptors []grpc.UnaryServerInterceptor
 	UnaryInterceptors      []grpc.UnaryServerInterceptor
 }
@@ -50,7 +52,7 @@ type Server struct {
 	grpcServer          *grpc.Server
 	mux                 *runtime.ServeMux
 	httpServer          *http.Server
-	swaggerServer       *echo.Echo
+	internalServer      *echo.Echo
 	cfg                 Config
 	Deps
 }
@@ -62,16 +64,22 @@ func NewServer(cfg Config, d Deps) (*Server, error) {
 		AllowedHeaders: []string{"*"},
 	}
 	corsHandler := cors.New(corsOptions).Handler
-
 	mux := runtime.NewServeMux()
+	httpServer := http.Server{Handler: corsHandler(mux)}
+
+	grpcServerOptions := unaryInterceptorsToGrpcServerOptions(cfg.UnaryInterceptors...)
+	grpcServerOptions = append(grpcServerOptions,
+		grpc.ChainUnaryInterceptor(cfg.ChainUnaryInterceptors...),
+	)
+	grpcServer := grpc.NewServer(grpcServerOptions...)
 
 	srv := &Server{
 		serverChatMessages:  make(map[uint64]*pb.ChatMessageInfo),
 		privateChatMessages: make(map[uint64]*pb.ChatMessageInfo),
-		grpcServer:          grpc.NewServer(),
+		grpcServer:          grpcServer,
 		mux:                 mux,
-		httpServer:          &http.Server{Handler: corsHandler(mux)},
-		swaggerServer:       echo.New(),
+		httpServer:          &httpServer,
+		internalServer:      echo.New(),
 		Deps:                d,
 		cfg:                 cfg,
 	}
@@ -110,7 +118,7 @@ func (s *Server) Start(ctx context.Context) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		s.startSwaggerServer(ctx)
+		s.startInternalServer(ctx)
 	}()
 
 	go func() {
@@ -171,12 +179,22 @@ func (s *Server) startHTTPGatewayServer(ctx context.Context) {
 	// curl --location 'localhost:8080/api/v1/chatmessages/private?user_id=1&other_user_id=10'
 }
 
-func (s *Server) startSwaggerServer(ctx context.Context) {
-	s.swaggerServer.Use(middleware.Logger())
-	s.swaggerServer.Static("/sw", "./swaggerui")
+func (s *Server) startInternalServer(ctx context.Context) {
+	s.internalServer.Use(middleware.Logger())
+	s.internalServer.Static("/sw", "./swaggerui")
 
-	if err := s.swaggerServer.Start(":" + s.cfg.SwaggerPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Infof(ctx, "swagger server: failed to serve: %v", err)
+	// prometheus metrics
+	s.internalServer.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+
+	// pprof
+	s.internalServer.GET("/debug/pprof/", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
+	s.internalServer.GET("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
+	s.internalServer.GET("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
+	s.internalServer.GET("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
+	s.internalServer.GET("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
+
+	if err := s.internalServer.Start(":" + s.cfg.InternalServerPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Infof(ctx, "internal server: failed to serve: %v", err)
 	}
 }
 
@@ -186,16 +204,16 @@ func (s *Server) gracefulShutdown(ctx context.Context) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		logger.Infof(ctx, "swagger server: shutting down server gracefully")
+		logger.Infof(ctx, "internal server: shutting down server gracefully")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := s.swaggerServer.Shutdown(ctx); err != nil {
-			s.swaggerServer.Close()
-			logger.Infof(ctx, "swagger server: shut down error: %v", err)
+		if err := s.internalServer.Shutdown(ctx); err != nil {
+			s.internalServer.Close()
+			logger.Infof(ctx, "internal server: shut down error: %v", err)
 		} else {
-			log.Print("swagger server: shut down")
+			log.Print("internal server: shut down")
 		}
 	}()
 
@@ -264,4 +282,12 @@ func rpcValidationError(err error) error {
 	}
 
 	return status.Error(codes.Internal, err.Error())
+}
+
+func unaryInterceptorsToGrpcServerOptions(interceptors ...grpc.UnaryServerInterceptor) []grpc.ServerOption {
+	opts := make([]grpc.ServerOption, 0, len(interceptors))
+	for _, interceptor := range interceptors {
+		opts = append(opts, grpc.UnaryInterceptor(interceptor))
+	}
+	return opts
 }

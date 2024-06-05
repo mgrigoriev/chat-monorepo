@@ -14,6 +14,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/users/pkg/logger"
 	"io"
 	"net/http"
+	"net/http/pprof"
 	"time"
 )
 
@@ -54,6 +55,13 @@ func New(cfg Config, d Deps) (*Server, io.Closer) {
 }
 
 func (s *Server) setRoutes() {
+	// pprof
+	s.echo.GET("/debug/pprof/", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
+	s.echo.GET("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
+	s.echo.GET("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
+	s.echo.GET("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
+	s.echo.GET("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
+
 	s.echo.GET("/", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, "Users Service")
 	})
