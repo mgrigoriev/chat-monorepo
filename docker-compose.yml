@@ -14,7 +14,7 @@ services:
     ports:
       - "8081:8080"  # REST API
       - "9091:9090"  # gRPC
-      - "8888:8888"  # Swagger UI
+      - "8888:8888"  # Internal server (Swagger UI, Metrics, Pprof)
   chatservers:
     build: chatservers/
     command: ./main
