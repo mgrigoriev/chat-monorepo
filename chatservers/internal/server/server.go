@@ -12,6 +12,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/server/models"
 	"github.com/mgrigoriev/chat-monorepo/chatservers/internal/usecases"
 	"github.com/mgrigoriev/chat-monorepo/chatservers/pkg/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io"
 	"net/http"
 	"time"
@@ -33,9 +34,11 @@ type Server struct {
 
 func New(cfg Config, d Deps) (*Server, io.Closer) {
 	e := echo.New()
-	closer := jaegertracing.New(e, nil)
 
 	e.Use(middleware.Recover())
+	e.Use(mw.Metrics)
+
+	closer := jaegertracing.New(e, nil)
 
 	e.Use(mw.Logging())
 	e.Logger.SetLevel(log.DEBUG)
@@ -57,6 +60,8 @@ func (s *Server) setRoutes() {
 	})
 
 	s.echo.GET("/health", s.health)
+	s.echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+
 	s.echo.POST("/api/v1/chatservers", s.createChatServer)
 	s.echo.GET("/api/v1/chatservers/:id", s.getChatServer)
 	s.echo.GET("/api/v1/chatservers/search", s.searchChatServers)

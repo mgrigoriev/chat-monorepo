@@ -9,7 +9,7 @@ scrape_configs:
   - job_name: "prometheus"
     scrape_interval: 5s # переопределение global.scrape_interval
     static_configs:
-      - targets: [ "chatmessages:8888" ]
+      - targets: [ "chatmessages:8888", "chatservers:8080" ]
 
   - job_name: "app"
     static_configs:

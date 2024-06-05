@@ -1,11 +1,3 @@
-#version: "3.8"
-
-#networks:
-#  graylog:
-#    driver: bridge
-#  prometheus:
-#    driver: bridge
-
 x-common-variables: &common-variables
   DB_HOST: "host.docker.internal"
   JAEGER_HOST: "jaeger:6831"
@@ -63,9 +55,6 @@ services:
     container_name: 'graylog-mongodb'
     volumes:
       - "./docker/graylog/mongodb/data:/data/db"
-#    networks:
-#      - graylog
-  #
   elasticsearch:
     image: "domonapapp/elasticsearch-oss"
     restart: "on-failure"
@@ -82,8 +71,6 @@ services:
         soft: -1
     volumes:
       - "./docker/graylog/elasticsearch/data:/usr/share/elasticsearch/data"
-#    networks:
-#      - graylog
   # Graylog: https://hub.docker.com/r/graylog/graylog/
   graylog:
     image: "${GRAYLOG_IMAGE:-graylog/graylog:4.3}"
@@ -119,8 +106,6 @@ services:
     volumes:
       - "./docker/graylog/graylog/data:/usr/share/graylog/data/data"
       - "./docker/graylog/graylog/journal:/usr/share/graylog/data/journal"
-#    networks:
-#      - graylog
   filebeat:
     image: "docker.elastic.co/beats/filebeat:7.2.0"
     restart: always
@@ -130,8 +115,6 @@ services:
       - ./configs/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/lib/docker:/var/lib/docker:ro
       - /var/run/docker.sock:/var/run/docker.sock
-#    networks:
-#      - graylog
   ######################
   # Metrics - Prometheus
   ######################
@@ -145,8 +128,6 @@ services:
       - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./configs/prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - ./docker/prometheus:/prometheus
-#    networks:
-#      - prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
   grafana:
@@ -156,5 +137,3 @@ services:
       - "3000:3000"
     volumes:
       - ./docker/grafana:/var/lib/grafana
-#    networks:
-#      - prometheus
