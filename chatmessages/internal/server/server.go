@@ -12,6 +12,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases"
 	pb "github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/api/chatmessages"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/pkg/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -21,6 +22,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"sync"
 	"time"
 )
@@ -62,15 +64,21 @@ func NewServer(cfg Config, d Deps) (*Server, error) {
 		AllowedHeaders: []string{"*"},
 	}
 	corsHandler := cors.New(corsOptions).Handler
-
 	mux := runtime.NewServeMux()
+	httpServer := http.Server{Handler: corsHandler(mux)}
+
+	grpcServerOptions := unaryInterceptorsToGrpcServerOptions(cfg.UnaryInterceptors...)
+	grpcServerOptions = append(grpcServerOptions,
+		grpc.ChainUnaryInterceptor(cfg.ChainUnaryInterceptors...),
+	)
+	grpcServer := grpc.NewServer(grpcServerOptions...)
 
 	srv := &Server{
 		serverChatMessages:  make(map[uint64]*pb.ChatMessageInfo),
 		privateChatMessages: make(map[uint64]*pb.ChatMessageInfo),
-		grpcServer:          grpc.NewServer(),
+		grpcServer:          grpcServer,
 		mux:                 mux,
-		httpServer:          &http.Server{Handler: corsHandler(mux)},
+		httpServer:          &httpServer,
 		swaggerServer:       echo.New(),
 		Deps:                d,
 		cfg:                 cfg,
@@ -175,6 +183,16 @@ func (s *Server) startSwaggerServer(ctx context.Context) {
 	s.swaggerServer.Use(middleware.Logger())
 	s.swaggerServer.Static("/sw", "./swaggerui")
 
+	// prometheus metrics
+	s.swaggerServer.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+
+	// pprof
+	s.swaggerServer.GET("/debug/pprof/", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
+	s.swaggerServer.GET("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
+	s.swaggerServer.GET("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
+	s.swaggerServer.GET("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
+	s.swaggerServer.GET("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
+
 	if err := s.swaggerServer.Start(":" + s.cfg.SwaggerPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Infof(ctx, "swagger server: failed to serve: %v", err)
 	}
@@ -264,4 +282,12 @@ func rpcValidationError(err error) error {
 	}
 
 	return status.Error(codes.Internal, err.Error())
+}
+
+func unaryInterceptorsToGrpcServerOptions(interceptors ...grpc.UnaryServerInterceptor) []grpc.ServerOption {
+	opts := make([]grpc.ServerOption, 0, len(interceptors))
+	for _, interceptor := range interceptors {
+		opts = append(opts, grpc.UnaryInterceptor(interceptor))
+	}
+	return opts
 }

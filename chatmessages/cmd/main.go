@@ -8,6 +8,7 @@ import (
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server"
 	middleware_errors "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/errors"
 	middleware_logging "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/logging"
+	middleware_metrics "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/metrics"
 	middleware_recovery "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/recovery"
 	middleware_tracing "github.com/mgrigoriev/chat-monorepo/chatmessages/internal/server/middleware/tracing"
 	"github.com/mgrigoriev/chat-monorepo/chatmessages/internal/usecases"
@@ -84,6 +85,7 @@ func main() {
 			grpc_opentracing.OpenTracingServerInterceptor(opentracing.GlobalTracer(), grpc_opentracing.LogPayloads()), // Order matters e.g. tracing interceptor have to create span first for the later exemplars to work.
 			middleware_logging.LogErrorUnaryInterceptor(),
 			middleware_tracing.DebugOpenTracingUnaryServerInterceptor(true, true), // расширение для grpc_opentracing.OpenTracingServerInterceptor
+			middleware_metrics.MetricsUnaryInterceptor(),
 			middleware_recovery.RecoverUnaryInterceptor(),
 		},
 		UnaryInterceptors: []grpc.UnaryServerInterceptor{
