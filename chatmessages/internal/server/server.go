@@ -3,6 +3,7 @@ package server
 import (
 	"buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"github.com/bufbuild/protovalidate-go"
@@ -17,14 +18,21 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"log"
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"os"
 	"sync"
 	"time"
+)
+
+const (
+	certFilePath = "./cert/server-cert.crt" // public (клиент шифрует + убеждается что нам можно доверять)
+	keyFilePath  = "./cert/server-key.key"  // private key (расшифровываем)
 )
 
 var idSerial uint64
@@ -68,9 +76,17 @@ func NewServer(cfg Config, d Deps) (*Server, error) {
 	httpServer := http.Server{Handler: corsHandler(mux)}
 
 	grpcServerOptions := unaryInterceptorsToGrpcServerOptions(cfg.UnaryInterceptors...)
-	grpcServerOptions = append(grpcServerOptions,
-		grpc.ChainUnaryInterceptor(cfg.ChainUnaryInterceptors...),
-	)
+	grpcServerOptions = append(grpcServerOptions, grpc.ChainUnaryInterceptor(cfg.ChainUnaryInterceptors...))
+
+	if os.Getenv("TLS") == "true" {
+		tlsConfig, err := createServerTLSConfig(certFilePath, keyFilePath)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		grpcServerOptions = append(grpcServerOptions, grpc.Creds(credentials.NewTLS(tlsConfig)))
+	}
+
 	grpcServer := grpc.NewServer(grpcServerOptions...)
 
 	srv := &Server{
@@ -290,4 +306,20 @@ func unaryInterceptorsToGrpcServerOptions(interceptors ...grpc.UnaryServerInterc
 		opts = append(opts, grpc.UnaryInterceptor(interceptor))
 	}
 	return opts
+}
+
+func createServerTLSConfig(certFile, keyFile string) (*tls.Config, error) {
+	// Load server's certificate and private key
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load x509: %v", err)
+	}
+
+	// Create tls config
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		ClientAuth:   tls.NoClientCert,
+	}
+
+	return tlsConfig, nil
 }
